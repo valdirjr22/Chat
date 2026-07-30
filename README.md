@@ -44,14 +44,14 @@
                 <label class="block text-xs font-semibold text-slate-300 mb-1">Seu Nome</label>
                 <div class="relative">
                     <i class="fas fa-user absolute left-3 top-3.5 text-slate-400 text-sm"></i>
-                    <input type="text" id="user-name-input" placeholder="Ex: Maria Silva" class="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-orange-500">
+                    <input type="text" id="user-name-input" placeholder="Ex: Lucas Silva" class="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-orange-500">
                 </div>
             </div>
             <div>
-                <label class="block text-xs font-semibold text-slate-300 mb-1">Número de Celular (com DDD e +55)</label>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Número de Celular (ex: +5581986422797)</label>
                 <div class="relative">
                     <i class="fas fa-phone absolute left-3 top-3.5 text-slate-400 text-sm"></i>
-                    <input type="tel" id="phone-input" placeholder="+5511999999999" class="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-orange-500">
+                    <input type="tel" id="phone-input" placeholder="+5581986422797" class="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-orange-500">
                 </div>
             </div>
             <div id="recaptcha-container" class="my-2"></div>
@@ -117,7 +117,7 @@
                 </div>
                 <h1 class="text-3xl font-extrabold bg-gradient-to-r from-sky-400 to-orange-500 bg-clip-text text-transparent mb-2">What Chat Web</h1>
                 <p class="text-xs text-slate-400 max-w-md">
-                    Selecione um contato existente ou clique no botão de adicionar contato para começar a conversar via número de telefone no Firebase.
+                    Selecione um contato ou adicione um novo número para começar a trocar mensagens em tempo real.
                 </p>
             </div>
 
@@ -137,7 +137,7 @@
                 <div id="messages-container" class="flex-grow p-6 overflow-y-auto space-y-3 bg-slate-950 flex flex-col"></div>
 
                 <form onsubmit="sendMessage(event)" class="p-3 bg-slate-900 border-t border-slate-800 flex items-center gap-3">
-                    <input type="text" id="message-input" placeholder="Digite sua mensagem no What Chat..." class="flex-grow py-2.5 px-4 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500">
+                    <input type="text" id="message-input" placeholder="Digite sua mensagem..." class="flex-grow py-2.5 px-4 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500">
                     <button type="submit" class="bg-neon-orange hover:bg-orange-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-neon transition">
                         <i class="fas fa-paper-plane text-sm"></i>
                     </button>
@@ -153,10 +153,10 @@
             <h3 class="text-lg font-bold text-white flex items-center gap-2">
                 <i class="fas fa-user-plus text-orange-400"></i> Novo Contato
             </h3>
-            <p class="text-xs text-slate-400">Insira o número de telefone com DDD registrado no What Chat.</p>
+            <p class="text-xs text-slate-400">Digite o telefone exatamente como está no banco (ex: +5581986422797).</p>
             <div>
-                <label class="block text-xs font-semibold text-slate-300 mb-1">Telefone (Ex: +5511999999999)</label>
-                <input type="tel" id="new-contact-phone" placeholder="+5511999999999" class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-orange-500">
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Telefone</label>
+                <input type="tel" id="new-contact-phone" placeholder="+5581986422797" class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-orange-500">
             </div>
             <div class="flex justify-end gap-2 pt-2">
                 <button onclick="toggleAddContactModal()" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-lg">Cancelar</button>
@@ -198,7 +198,7 @@
             const name = document.getElementById('user-name-input').value.trim();
             const phone = document.getElementById('phone-input').value.trim();
 
-            if (!name || !phone) return alert("Preencha o seu nome e o número de telefone com +55 e DDD.");
+            if (!name || !phone) return alert("Preencha seu nome e telefone (+55...).");
 
             try {
                 confirmationResult = await signInWithPhoneNumber(auth, phone, window.recaptchaVerifier);
@@ -211,30 +211,31 @@
             }
         };
 
-        // Validar código SMS e cadastrar/logar no Firestore
+        // Validar código SMS e gravar exatamente como na coleção 'Users' da sua foto
         window.verifySMSCode = async () => {
             const code = document.getElementById('code-input').value.trim();
             try {
                 const res = await confirmationResult.confirm(code);
                 const name = sessionStorage.getItem('pending_name') || "Usuário";
 
-                // Registra/atualiza o usuário na coleção 'users' usando o telefone como chave
-                await setDoc(doc(db, "users", res.user.phoneNumber), {
-                    uid: res.user.uid,
-                    phone: res.user.phoneNumber,
-                    name: name
+                // Salva na coleção 'Users' exatamente com a estrutura id, name, phone
+                await setDoc(doc(db, "Users", res.user.phoneNumber), {
+                    id: res.user.phoneNumber,
+                    name: name,
+                    phone: res.user.phoneNumber
                 }, { merge: true });
 
             } catch (err) {
                 console.error(err);
-                alert("Código de verificação SMS incorreto!");
+                alert("Código SMS incorreto!");
             }
         };
 
-        // Monitor do Firebase Auth
+        // Escuta o login do usuário
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                const userDoc = await getDoc(doc(db, "users", user.phoneNumber));
+                // Busca na coleção 'Users'
+                const userDoc = await getDoc(doc(db, "Users", user.phoneNumber));
                 currentUserData = userDoc.exists() ? userDoc.data() : { phone: user.phoneNumber, name: "Usuário" };
 
                 document.getElementById('my-profile-name').textContent = currentUserData.name;
@@ -249,13 +250,13 @@
             }
         });
 
-        // Adicionar contato procurando número no Firestore
+        // Adiciona contato buscando na coleção 'Users'
         window.addContact = async () => {
             const phone = document.getElementById('new-contact-phone').value.trim();
-            if (!phone || phone === currentUserData.phone) return alert("Digite um número válido e diferente do seu.");
+            if (!phone || phone === currentUserData.phone) return alert("Insira um número válido e diferente do seu.");
 
-            const userDoc = await getDoc(doc(db, "users", phone));
-            if (!userDoc.exists()) return alert("Este número de telefone não está cadastrado no What Chat.");
+            const userDoc = await getDoc(doc(db, "Users", phone));
+            if (!userDoc.exists()) return alert("Telefone não encontrado no banco de dados!");
 
             renderContactItem(userDoc.data());
             window.toggleAddContactModal();
@@ -278,7 +279,7 @@
             list.appendChild(item);
         }
 
-        // Selecionar conversa
+        // Seleciona a conversa
         function selectContact(user) {
             activeContactPhone = user.phone;
             document.getElementById('welcome-view').classList.add('hidden');
@@ -292,11 +293,10 @@
             listenToMessages();
         }
 
-        // Escutar mensagens em tempo real no Firestore
+        // Carrega as mensagens do Firestore
         function listenToMessages() {
             if (unsubscribeMessages) unsubscribeMessages();
 
-            // Cria um ID de sala único entre os 2 telefones em ordem alfabética
             const chatId = [currentUserData.phone, activeContactPhone].sort().join('_');
             const q = query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "asc"));
 
@@ -327,7 +327,7 @@
             });
         }
 
-        // Enviar mensagem para o banco
+        // Enviar mensagem
         window.sendMessage = async (e) => {
             e.preventDefault();
             const input = document.getElementById('message-input');
