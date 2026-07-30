@@ -9,25 +9,19 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         
-        /* Cores Neon & Efeitos Personalizados */
         .bg-neon-orange { background-color: #ff6b00; }
         .bg-neon-orange:hover { background-color: #e05e00; }
         .text-neon-orange { color: #ff6b00; }
-        .border-neon-orange { border-color: #ff6b00; }
-        
         .shadow-neon { box-shadow: 0 0 15px rgba(255, 107, 0, 0.4); }
         .shadow-blue-glow { box-shadow: 0 0 15px rgba(14, 165, 233, 0.3); }
 
-        /* Estilização da Aba Ativa em Azul/Laranja */
         .tab-btn.active { 
             color: #ff6b00; 
             border-bottom: 3px solid #ff6b00; 
             font-weight: 700;
         }
-        
         .hidden { display: none !important; }
         
-        /* Scrollbar Personalizada */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 10px; }
@@ -38,11 +32,11 @@
 
     <div id="auth-screen" class="bg-slate-800 border border-slate-700 rounded-2xl shadow-blue-glow w-full max-w-md p-8 z-50 text-white">
         <div class="text-center mb-6">
-            <div class="w-16 h-16 bg-gradient-to-tr from-sky-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-neon transform rotate-3">
+            <div class="w-16 h-16 bg-gradient-to-tr from-sky-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-neon">
                 <i class="fas fa-bolt text-white text-3xl"></i>
             </div>
-            <h2 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-sky-400 to-orange-500 bg-clip-text text-transparent">What Chat</h2>
-            <p class="text-xs text-slate-400 mt-1">Conecte-se instantaneamente pelo seu telefone</p>
+            <h2 class="text-3xl font-extrabold bg-gradient-to-r from-sky-400 to-orange-500 bg-clip-text text-transparent">What Chat</h2>
+            <p class="text-xs text-slate-400 mt-1">Cadastre-se ou entre com seu número de celular</p>
         </div>
 
         <div id="phone-step" class="space-y-4">
@@ -50,19 +44,19 @@
                 <label class="block text-xs font-semibold text-slate-300 mb-1">Seu Nome</label>
                 <div class="relative">
                     <i class="fas fa-user absolute left-3 top-3.5 text-slate-400 text-sm"></i>
-                    <input type="text" id="user-name-input" placeholder="Ex: Lucas Silva" class="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-orange-500">
+                    <input type="text" id="user-name-input" placeholder="Ex: Maria Silva" class="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-orange-500">
                 </div>
             </div>
             <div>
-                <label class="block text-xs font-semibold text-slate-300 mb-1">Número de Celular</label>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Número de Celular (com DDD e +55)</label>
                 <div class="relative">
                     <i class="fas fa-phone absolute left-3 top-3.5 text-slate-400 text-sm"></i>
-                    <input type="tel" id="phone-input" placeholder="+55 11 99999-9999" class="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-orange-500">
+                    <input type="tel" id="phone-input" placeholder="+5511999999999" class="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-orange-500">
                 </div>
             </div>
             <div id="recaptcha-container" class="my-2"></div>
             <button onclick="sendSMS()" class="w-full bg-neon-orange hover:bg-orange-600 text-white font-bold py-3 rounded-lg transition shadow-neon flex items-center justify-center gap-2">
-                <span>Receber Código</span> <i class="fas fa-paper-plane text-xs"></i>
+                <span>Enviar Código SMS</span> <i class="fas fa-paper-plane text-xs"></i>
             </button>
         </div>
 
@@ -72,9 +66,8 @@
                 <input type="text" id="code-input" maxlength="6" placeholder="000000" class="w-full py-3 bg-slate-900 border border-orange-500 rounded-lg text-center tracking-widest text-2xl font-bold text-orange-400 focus:outline-none">
             </div>
             <button onclick="verifySMSCode()" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 rounded-lg transition shadow-blue-glow">
-                Entrar no What Chat
+                Confirmar e Entrar
             </button>
-            <button onclick="resendSMS()" class="w-full text-xs text-slate-400 hover:text-orange-400 text-center block transition">Não recebeu? Reenviar código</button>
         </div>
     </div>
 
@@ -88,86 +81,47 @@
                         <span id="user-avatar-initial">W</span>
                     </div>
                     <div>
-                        <h3 id="my-profile-name" class="font-bold text-white text-sm leading-tight">Meu Nome</h3>
-                        <p id="my-profile-phone" class="text-[11px] text-sky-400">+55 ...</p>
+                        <h3 id="my-profile-name" class="font-bold text-white text-sm">Meu Nome</h3>
+                        <p id="my-profile-phone" class="text-[11px] text-orange-400">+55...</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-3 text-slate-300 text-lg">
-                    <button title="Novo Contato" onclick="toggleAddContactModal()" class="hover:text-orange-400 transition"><i class="fas fa-user-plus"></i></button>
+                    <button title="Adicionar Contato" onclick="toggleAddContactModal()" class="hover:text-orange-400 transition"><i class="fas fa-user-plus"></i></button>
                     <button title="Sair" onclick="logout()" class="hover:text-red-400 transition"><i class="fas fa-power-off"></i></button>
                 </div>
             </div>
 
             <div class="flex border-b border-slate-800 bg-slate-900 text-xs font-semibold text-slate-400">
-                <button onclick="switchTab('chats')" id="tab-btn-chats" class="tab-btn active flex-1 py-3 text-center transition flex items-center justify-center gap-2">
+                <button onclick="switchTab('chats')" id="tab-btn-chats" class="tab-btn active flex-1 py-3 text-center flex items-center justify-center gap-2">
                     <i class="fas fa-comments"></i> Conversas
                 </button>
-                <button onclick="switchTab('status')" id="tab-btn-status" class="tab-btn flex-1 py-3 text-center transition flex items-center justify-center gap-2">
+                <button onclick="switchTab('status')" id="tab-btn-status" class="tab-btn flex-1 py-3 text-center flex items-center justify-center gap-2">
                     <i class="fas fa-bolt"></i> Status
                 </button>
-                <button onclick="switchTab('calls')" id="tab-btn-calls" class="tab-btn flex-1 py-3 text-center transition flex items-center justify-center gap-2">
-                    <i class="fas fa-phone-alt"></i> Chamadas
-                </button>
             </div>
 
-            <div class="p-3 bg-slate-900 border-b border-slate-800">
-                <div class="relative">
-                    <i class="fas fa-search absolute left-3 top-2.5 text-slate-500 text-xs"></i>
-                    <input type="text" id="search-input" onkeyup="filterContacts()" placeholder="Buscar no What Chat..." class="w-full pl-9 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500">
-                </div>
+            <div id="tab-content-chats" class="flex-grow overflow-y-auto bg-slate-900 divide-y divide-slate-800">
+                <div id="contacts-list"></div>
             </div>
 
-            <div class="flex-grow overflow-y-auto bg-slate-900">
-                
-                <div id="tab-content-chats" class="divide-y divide-slate-800">
-                    <div id="contacts-list">
-                        </div>
-                </div>
-
-                <div id="tab-content-status" class="p-4 hidden space-y-4">
-                    <div class="flex items-center gap-3 cursor-pointer p-3 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 transition">
-                        <div class="relative">
-                            <div class="w-12 h-12 bg-sky-500/20 text-orange-400 rounded-full flex items-center justify-center font-bold border border-orange-500">
-                                <i class="fas fa-plus"></i>
-                            </div>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-sm text-white">Meu Status</h4>
-                            <p class="text-xs text-slate-400">Compartilhe uma atualização no What Chat</p>
-                        </div>
-                    </div>
-                    <div class="text-[10px] font-bold text-orange-400 uppercase tracking-wider mt-4">Atualizações recentes</div>
-                    <p class="text-xs text-slate-500 text-center py-6">Nenhum status publicado hoje.</p>
-                </div>
-
-                <div id="tab-content-calls" class="p-4 hidden">
-                    <div class="text-[10px] font-bold text-sky-400 uppercase tracking-wider mb-2">Histórico Recente</div>
-                    <div class="text-center py-10 text-slate-500">
-                        <i class="fas fa-phone-slash text-3xl mb-2 text-slate-600"></i>
-                        <p class="text-xs">Nenhuma chamada registrada.</p>
-                    </div>
-                </div>
-
+            <div id="tab-content-status" class="p-4 hidden text-slate-400 text-xs text-center">
+                <p>Nenhuma atualização recente.</p>
             </div>
         </div>
 
         <div class="hidden md:flex flex-col flex-grow bg-slate-950 relative">
 
-            <div id="welcome-view" class="flex flex-col items-center justify-center h-full text-center p-8 bg-slate-950">
-                <div class="w-28 h-28 bg-gradient-to-tr from-sky-500 to-orange-500 text-white rounded-3xl flex items-center justify-center text-5xl mb-6 shadow-neon transform hover:scale-105 transition">
+            <div id="welcome-view" class="flex flex-col items-center justify-center h-full text-center p-8">
+                <div class="w-28 h-28 bg-gradient-to-tr from-sky-500 to-orange-500 text-white rounded-3xl flex items-center justify-center text-5xl mb-6 shadow-neon">
                     <i class="fas fa-bolt"></i>
                 </div>
                 <h1 class="text-3xl font-extrabold bg-gradient-to-r from-sky-400 to-orange-500 bg-clip-text text-transparent mb-2">What Chat Web</h1>
-                <p class="text-xs text-slate-400 max-w-md leading-relaxed mb-6">
-                    Mensagens em tempo real com visual moderno e de alta performance. Selecione um contato na lista ou adicione um novo número para conversar.
+                <p class="text-xs text-slate-400 max-w-md">
+                    Selecione um contato existente ou clique no botão de adicionar contato para começar a conversar via número de telefone no Firebase.
                 </p>
-                <div class="flex items-center gap-2 text-xs text-slate-500 border border-slate-800 bg-slate-900 px-4 py-2 rounded-full shadow-sm">
-                    <i class="fas fa-shield-alt text-orange-400"></i> Conexão criptografada e segura
-                </div>
             </div>
 
             <div id="active-chat-view" class="flex-col h-full hidden">
-                
                 <div class="p-3.5 bg-slate-900 border-b border-slate-800 flex justify-between items-center">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold shadow-blue-glow">
@@ -178,24 +132,16 @@
                             <p id="active-contact-phone" class="text-[10px] text-orange-400">+55...</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-4 text-slate-400 text-base">
-                        <button title="Pesquisar" class="hover:text-orange-400 transition"><i class="fas fa-search"></i></button>
-                        <button title="Opções" class="hover:text-orange-400 transition"><i class="fas fa-ellipsis-v"></i></button>
-                    </div>
                 </div>
 
-                <div id="messages-container" class="flex-grow p-6 overflow-y-auto space-y-3 bg-slate-950 flex flex-col">
-                    </div>
+                <div id="messages-container" class="flex-grow p-6 overflow-y-auto space-y-3 bg-slate-950 flex flex-col"></div>
 
                 <form onsubmit="sendMessage(event)" class="p-3 bg-slate-900 border-t border-slate-800 flex items-center gap-3">
-                    <button type="button" class="text-slate-400 text-xl hover:text-orange-400 transition"><i class="far fa-smile"></i></button>
-                    <button type="button" class="text-slate-400 text-xl hover:text-orange-400 transition"><i class="fas fa-paperclip"></i></button>
                     <input type="text" id="message-input" placeholder="Digite sua mensagem no What Chat..." class="flex-grow py-2.5 px-4 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500">
-                    <button type="submit" id="send-btn" class="bg-neon-orange hover:bg-orange-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-neon transition">
+                    <button type="submit" class="bg-neon-orange hover:bg-orange-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-neon transition">
                         <i class="fas fa-paper-plane text-sm"></i>
                     </button>
                 </form>
-
             </div>
 
         </div>
@@ -207,14 +153,14 @@
             <h3 class="text-lg font-bold text-white flex items-center gap-2">
                 <i class="fas fa-user-plus text-orange-400"></i> Novo Contato
             </h3>
-            <p class="text-xs text-slate-400">Insira o número de telefone cadastrado no What Chat para iniciar a conversa.</p>
+            <p class="text-xs text-slate-400">Insira o número de telefone com DDD registrado no What Chat.</p>
             <div>
-                <label class="block text-xs font-semibold text-slate-300 mb-1">Telefone com DDD</label>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Telefone (Ex: +5511999999999)</label>
                 <input type="tel" id="new-contact-phone" placeholder="+5511999999999" class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-orange-500">
             </div>
             <div class="flex justify-end gap-2 pt-2">
                 <button onclick="toggleAddContactModal()" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-lg">Cancelar</button>
-                <button onclick="addContact()" class="px-4 py-2 text-xs font-bold bg-neon-orange text-white rounded-lg shadow-neon hover:bg-orange-600">Adicionar</button>
+                <button onclick="addContact()" class="px-4 py-2 text-xs font-bold bg-neon-orange text-white rounded-lg shadow-neon hover:bg-orange-600">Buscar e Adicionar</button>
             </div>
         </div>
     </div>
@@ -224,11 +170,11 @@
         import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDoc, addDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Substitua pelas credenciais do seu Firebase Console
+        // Cole aqui suas credenciais do Firebase Console
         const firebaseConfig = {
-            apiKey: "SUA_API_KEY",
+            apiKey: "SUA_API_KEY_AQUI",
             authDomain: "SEU_PROJETO.firebaseapp.com",
-            projectId: "SEU_PROJETO",
+            projectId: "SEU_PROJETO_ID",
             storageBucket: "SEU_PROJETO.appspot.com",
             messagingSenderId: "123456789",
             appId: "1:123456789:web:abcdef"
@@ -247,29 +193,12 @@
             window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { 'size': 'invisible' });
         };
 
-        // Controle das Abas (Conversas, Status, Chamadas)
-        window.switchTab = (tabName) => {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`tab-btn-${tabName}`).classList.add('active');
-
-            document.getElementById('tab-content-chats').classList.add('hidden');
-            document.getElementById('tab-content-status').classList.add('hidden');
-            document.getElementById('tab-content-calls').classList.add('hidden');
-
-            document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
-        };
-
-        // Controle do Modal de Contatos
-        window.toggleAddContactModal = () => {
-            document.getElementById('add-contact-modal').classList.toggle('hidden');
-        };
-
-        // Enviar SMS pelo Firebase
+        // Enviar SMS de autenticação
         window.sendSMS = async () => {
             const name = document.getElementById('user-name-input').value.trim();
             const phone = document.getElementById('phone-input').value.trim();
 
-            if (!name || !phone) return alert("Por favor, preencha o nome e o número de telefone (+55...).");
+            if (!name || !phone) return alert("Preencha o seu nome e o número de telefone com +55 e DDD.");
 
             try {
                 confirmationResult = await signInWithPhoneNumber(auth, phone, window.recaptchaVerifier);
@@ -277,31 +206,36 @@
                 document.getElementById('phone-step').classList.add('hidden');
                 document.getElementById('code-step').classList.remove('hidden');
             } catch (err) {
+                console.error(err);
                 alert("Erro ao enviar SMS: " + err.message);
             }
         };
 
-        // Validar Código SMS
+        // Validar código SMS e cadastrar/logar no Firestore
         window.verifySMSCode = async () => {
             const code = document.getElementById('code-input').value.trim();
             try {
                 const res = await confirmationResult.confirm(code);
-                const name = sessionStorage.getItem('pending_name') || "Usuário What Chat";
+                const name = sessionStorage.getItem('pending_name') || "Usuário";
+
+                // Registra/atualiza o usuário na coleção 'users' usando o telefone como chave
                 await setDoc(doc(db, "users", res.user.phoneNumber), {
                     uid: res.user.uid,
                     phone: res.user.phoneNumber,
                     name: name
                 }, { merge: true });
+
             } catch (err) {
-                alert("Código de verificação incorreto!");
+                console.error(err);
+                alert("Código de verificação SMS incorreto!");
             }
         };
 
-        // Monitor de Estado da Autenticação
+        // Monitor do Firebase Auth
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const userDoc = await getDoc(doc(db, "users", user.phoneNumber));
-                currentUserData = userDoc.exists() ? userDoc.data() : { phone: user.phoneNumber, name: "Usuário What Chat" };
+                currentUserData = userDoc.exists() ? userDoc.data() : { phone: user.phoneNumber, name: "Usuário" };
 
                 document.getElementById('my-profile-name').textContent = currentUserData.name;
                 document.getElementById('my-profile-phone').textContent = currentUserData.phone;
@@ -315,16 +249,16 @@
             }
         });
 
-        // Adicionar Contato pelo Telefone
+        // Adicionar contato procurando número no Firestore
         window.addContact = async () => {
             const phone = document.getElementById('new-contact-phone').value.trim();
-            if (!phone || phone === currentUserData.phone) return alert("Insira um número de contato válido.");
+            if (!phone || phone === currentUserData.phone) return alert("Digite um número válido e diferente do seu.");
 
             const userDoc = await getDoc(doc(db, "users", phone));
-            if (!userDoc.exists()) return alert("Este telefone ainda não está cadastrado no What Chat.");
+            if (!userDoc.exists()) return alert("Este número de telefone não está cadastrado no What Chat.");
 
             renderContactItem(userDoc.data());
-            toggleAddContactModal();
+            window.toggleAddContactModal();
         };
 
         function renderContactItem(user) {
@@ -337,17 +271,14 @@
                     ${user.name.charAt(0).toUpperCase()}
                 </div>
                 <div class="flex-grow">
-                    <div class="flex justify-between items-center">
-                        <h4 class="font-semibold text-white text-sm">${user.name}</h4>
-                        <span class="text-[9px] text-orange-400 font-bold uppercase">Ativo</span>
-                    </div>
-                    <p class="text-xs text-slate-400 truncate">${user.phone}</p>
+                    <h4 class="font-semibold text-white text-sm">${user.name}</h4>
+                    <p class="text-xs text-orange-400 truncate">${user.phone}</p>
                 </div>
             `;
             list.appendChild(item);
         }
 
-        // Selecionar Contato Ativo
+        // Selecionar conversa
         function selectContact(user) {
             activeContactPhone = user.phone;
             document.getElementById('welcome-view').classList.add('hidden');
@@ -361,10 +292,11 @@
             listenToMessages();
         }
 
-        // Escutar Mensagens em Tempo Real no Firestore
+        // Escutar mensagens em tempo real no Firestore
         function listenToMessages() {
             if (unsubscribeMessages) unsubscribeMessages();
 
+            // Cria um ID de sala único entre os 2 telefones em ordem alfabética
             const chatId = [currentUserData.phone, activeContactPhone].sort().join('_');
             const q = query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "asc"));
 
@@ -385,7 +317,9 @@
                     }`;
                     bubble.innerHTML = `
                         <div>${msg.text}</div>
-                        <div class="text-[9px] ${isSent ? 'text-sky-200' : 'text-slate-400'} text-right mt-1">Agora</div>
+                        <div class="text-[9px] ${isSent ? 'text-sky-200' : 'text-slate-400'} text-right mt-1">
+                            ${msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '...'}
+                        </div>
                     `;
                     container.appendChild(bubble);
                 });
@@ -393,7 +327,7 @@
             });
         }
 
-        // Enviar Mensagem
+        // Enviar mensagem para o banco
         window.sendMessage = async (e) => {
             e.preventDefault();
             const input = document.getElementById('message-input');
@@ -408,6 +342,20 @@
             });
 
             input.value = '';
+        };
+
+        window.toggleAddContactModal = () => {
+            document.getElementById('add-contact-modal').classList.toggle('hidden');
+        };
+
+        window.switchTab = (tabName) => {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`tab-btn-${tabName}`).classList.add('active');
+
+            document.getElementById('tab-content-chats').classList.add('hidden');
+            document.getElementById('tab-content-status').classList.add('hidden');
+
+            document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
         };
 
         window.logout = () => {
