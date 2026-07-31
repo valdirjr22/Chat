@@ -11,13 +11,14 @@
         html, body {
             width: 100vw !important;
             height: 100vh !important;
-            height: 100dvh !important;
+            height: 100dvh !important; /* usa altura real da viewport visível no app/celular */
             margin: 0 !important;
             padding: 0 !important;
             overflow: hidden !important;
             font-family: 'Inter', sans-serif;
         }
 
+        /* Empurra o conteúdo pra dentro da área segura (notch, barra de status, barra de gestos) */
         #app-body {
             box-sizing: border-box !important;
             padding-top: env(safe-area-inset-top, 0px) !important;
@@ -55,6 +56,8 @@
             animation: vibrate-screen 0.2s ease-in-out 2;
         }
 
+        /* Telas fixas em tela cheia (fixed inset-0) não herdam o padding do body,
+           então recebem a área segura individualmente */
         #loading-screen,
         #incoming-call-modal,
         #active-call-modal,
@@ -284,7 +287,7 @@
             </div>
             <div>
                 <h4 id="incoming-caller-name" class="font-bold text-slate-800 text-lg">Contato</h4>
-                <p id="incoming-call-type" class="text-xs text-slate-500">Recebendo chamada...</p>
+                <p id="incoming-call-type" class="text-xs text-slate-500">Recebendo chamada de vídeo...</p>
             </div>
             <div class="flex justify-center gap-4 pt-2">
                 <button onclick="recusarChamada()" class="px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl text-xs flex items-center gap-2 transition">
@@ -391,10 +394,7 @@
         function inicializarPeerJS() {
             if (!currentUserData || myPeer) return;
 
-            const peerId = `whatchat_${currentUserData.username}`;
-            console.log("Inicializando PeerJS com ID:", peerId);
-
-            myPeer = new Peer(peerId, {
+            myPeer = new Peer(`whatchat_${currentUserData.username}`, {
                 config: {
                     iceServers: [
                         { urls: 'stun:stun.l.google.com:19302' },
@@ -406,22 +406,26 @@
             });
 
             myPeer.on('open', (id) => {
-                console.log('PeerJS conectado com sucesso. ID atribuído:', id);
+                console.log('Conectado ao servidor PeerJS com ID:', id);
             });
 
             myPeer.on('error', (err) => {
-                console.error('Erro detalhado no PeerJS:', err);
+                console.error('Erro no PeerJS:', err);
                 if (err.type === 'peer-unavailable') {
-                    alert('O contato desejado não está online ou conectado ao sistema de chamadas.');
-                } else if (err.type === 'unavailable-id') {
-                    console.warn('ID de Peer já em uso, tentando reconectar...');
+                    alert('O contato não está online ou conectado ao sistema de chamadas no momento.');
                 }
             });
 
-            // Quando alguém faz uma chamada para este usuário
             myPeer.on('call', (call) => {
-                console.log('Chamada recebida de:', call.peer);
                 currentCall = call;
+                call.on('stream', (remoteStream) => {
+                    const remoteVideo = document.getElementById('remote-video');
+                    remoteVideo.srcObject = remoteStream;
+                    remoteVideo.play().catch(e => console.log("Erro ao reproduzir vídeo remoto:", e));
+                });
+                call.on('close', () => {
+                    encerrarChamadaUI();
+                });
             });
 
             ouvirChamadasEntrantes();
@@ -437,7 +441,7 @@
                     if (data.status === 'calling') {
                         activeCallSignalData = data;
                         document.getElementById('incoming-caller-name').textContent = data.fromName || data.from;
-                        document.getElementById('incoming-call-type').textContent = data.isVideo ? "Recebendo chamada de vídeo..." : "Recebendo chamada de voz...";
+                        document.getElementById('incoming-call-type').textContent = data.isVideo ? "Chamada de Vídeo..." : "Chamada de Voz...";
                         document.getElementById('incoming-call-modal').classList.remove('hidden');
                         
                         if ("vibrate" in navigator) navigator.vibrate([300, 200, 300, 200]);
@@ -462,7 +466,6 @@
                 document.getElementById('call-contact-name').textContent = activeContactName;
                 document.getElementById('active-call-modal').classList.remove('hidden');
 
-                // Notifica o Firebase que está chamando
                 await setDoc(doc(db, "calls", activeContactUsername), {
                     from: currentUserData.username,
                     fromName: currentUserData.name,
@@ -472,33 +475,23 @@
                 });
 
                 const targetPeerId = `whatchat_${activeContactUsername}`;
-                console.log("Iniciando chamada PeerJS para:", targetPeerId);
-
                 const call = myPeer.call(targetPeerId, localStream);
 
                 if (call) {
                     currentCall = call;
-                    
                     call.on('stream', (remoteStream) => {
-                        console.log("Stream remoto recebido com sucesso!");
                         const remoteVideo = document.getElementById('remote-video');
                         remoteVideo.srcObject = remoteStream;
                         remoteVideo.play().catch(e => console.log("Erro ao reproduzir vídeo remoto:", e));
                     });
-
                     call.on('close', () => {
-                        console.log("A chamada foi fechada pelo peer remoto.");
-                        encerrarChamadaUI();
-                    });
-
-                    call.on('error', (err) => {
-                        console.error("Erro na conexão da chamada PeerJS:", err);
+                        encerrarChamada();
                     });
                 }
 
             } catch (err) {
-                console.error("Erro ao obter mídia ou iniciar chamada:", err);
-                alert("Não foi possível acessar a câmera ou microfone, ou ocorreu falha ao iniciar a chamada. Verifique as permissões do navegador.");
+                console.error(err);
+                alert("Não foi possível acessar a câmera ou microfone. Verifique as permissões.");
             }
         };
 
@@ -522,24 +515,15 @@
                 });
 
                 if (currentCall) {
-                    console.log("Respondendo à chamada com o stream local...");
                     currentCall.answer(localStream);
-                    
                     currentCall.on('stream', (remoteStream) => {
-                        console.log("Stream remoto conectado na chamada atendida!");
                         const remoteVideo = document.getElementById('remote-video');
                         remoteVideo.srcObject = remoteStream;
                         remoteVideo.play().catch(e => console.log("Erro ao reproduzir vídeo remoto:", e));
                     });
-
-                    currentCall.on('close', () => {
-                        encerrarChamadaUI();
-                    });
                 } else {
-                    console.warn("Objeto currentCall nulo ao atender. Realizando chamada de retorno...");
                     const call = myPeer.call(`whatchat_${activeCallSignalData.from}`, localStream);
                     currentCall = call;
-                    
                     call.on('stream', (remoteStream) => {
                         const remoteVideo = document.getElementById('remote-video');
                         remoteVideo.srcObject = remoteStream;
@@ -548,8 +532,8 @@
                 }
 
             } catch (err) {
-                console.error("Erro ao atender chamada:", err);
-                alert("Erro ao conectar áudio/vídeo na chamada.");
+                console.error(err);
+                alert("Erro ao conectar áudio/vídeo.");
             }
         };
 
