@@ -6,6 +6,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
 
@@ -214,10 +215,10 @@
                     </div>
 
                     <div class="flex items-center gap-4 text-slate-600 text-lg pr-2">
-                        <button title="Chamada de Voz" onclick="iniciarChamadaVoz()" class="hover:text-sky-600 transition p-1">
+                        <button title="Chamada de Voz" onclick="iniciarChamada(false)" class="hover:text-sky-600 transition p-1">
                             <i class="fas fa-phone"></i>
                         </button>
-                        <button title="Chamada de Vídeo" onclick="iniciarChamadaVideo()" class="hover:text-orange-500 transition p-1">
+                        <button title="Chamada de Vídeo" onclick="iniciarChamada(true)" class="hover:text-orange-500 transition p-1">
                             <i class="fas fa-video"></i>
                         </button>
                     </div>
@@ -246,6 +247,43 @@
 
         </div>
 
+    </div>
+
+    <div id="incoming-call-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden z-[70] p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm text-center space-y-4 border border-slate-200 shadow-2xl">
+            <div class="w-16 h-16 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center mx-auto text-2xl animate-bounce">
+                <i class="fas fa-phone-alt"></i>
+            </div>
+            <div>
+                <h4 id="incoming-caller-name" class="font-bold text-slate-800 text-lg">Contato</h4>
+                <p class="text-xs text-slate-500">Está te chamando...</p>
+            </div>
+            <div class="flex justify-center gap-4 pt-2">
+                <button onclick="recusarChamada()" class="px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl text-xs flex items-center gap-2 transition">
+                    <i class="fas fa-phone-slash"></i> Recusar
+                </button>
+                <button onclick="atenderChamada()" class="px-5 py-2.5 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl text-xs flex items-center gap-2 transition shadow-neon">
+                    <i class="fas fa-phone"></i> Atender
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="active-call-modal" class="fixed inset-0 bg-slate-950 flex flex-col items-center justify-between hidden z-[60] p-4">
+        <div class="text-white text-center mt-4">
+            <h3 id="call-status-text" class="text-lg font-bold">Em chamada com <span id="call-contact-name"></span></h3>
+        </div>
+
+        <div class="relative w-full max-w-4xl flex-grow my-4 bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center">
+            <video id="remote-video" autoplay playsinline class="w-full h-full object-cover"></video>
+            <video id="local-video" autoplay playsinline muted class="absolute bottom-4 right-4 w-32 h-44 object-cover rounded-xl border-2 border-white/40 shadow-xl bg-slate-800"></video>
+        </div>
+
+        <div class="mb-6 flex items-center gap-4">
+            <button onclick="encerrarChamada()" class="w-14 h-14 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center text-xl shadow-lg transition">
+                <i class="fas fa-phone-slash"></i>
+            </button>
+        </div>
     </div>
 
     <div id="edit-profile-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
@@ -311,9 +349,108 @@
         let contatosCache = [];
         let isFirstLoad = true;
 
+        // Variáveis do PeerJS (Chamadas em Tempo Real)
+        let myPeer = null;
+        let currentCall = null;
+        let localStream = null;
+        let incomingCallObj = null;
+
         function normalizarUsuario(u) {
             return (u || '').trim().toLowerCase().replace(/\s+/g, '');
         }
+
+        function inicializarPeerJS() {
+            if (!currentUserData || myPeer) return;
+            
+            // Cria ID único no PeerJS baseado no nome de usuário
+            myPeer = new Peer(`whatchat_${currentUserData.username}`);
+
+            myPeer.on('call', (call) => {
+                incomingCallObj = call;
+                const callerUsername = call.peer.replace('whatchat_', '');
+                document.getElementById('incoming-caller-name').textContent = callerUsername;
+                document.getElementById('incoming-call-modal').classList.remove('hidden');
+            });
+        }
+
+        window.iniciarChamada = async (isVideo) => {
+            if (!activeContactUsername) return;
+
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: isVideo,
+                    audio: true
+                });
+
+                document.getElementById('local-video').srcObject = localStream;
+                document.getElementById('call-contact-name').textContent = activeContactName;
+                document.getElementById('active-call-modal').classList.remove('hidden');
+
+                const targetPeerId = `whatchat_${activeContactUsername}`;
+                const call = myPeer.call(targetPeerId, localStream);
+
+                call.on('stream', (remoteStream) => {
+                    document.getElementById('remote-video').srcObject = remoteStream;
+                });
+
+                call.on('close', () => {
+                    encerrarChamada();
+                });
+
+                currentCall = call;
+
+            } catch (err) {
+                console.error(err);
+                alert("Não foi possível acessar a câmera ou microfone.");
+            }
+        };
+
+        window.atenderChamada = async () => {
+            if (!incomingCallObj) return;
+
+            document.getElementById('incoming-call-modal').classList.add('hidden');
+
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                document.getElementById('local-video').srcObject = localStream;
+
+                incomingCallObj.answer(localStream);
+                document.getElementById('active-call-modal').classList.remove('hidden');
+
+                incomingCallObj.on('stream', (remoteStream) => {
+                    document.getElementById('remote-video').srcObject = remoteStream;
+                });
+
+                incomingCallObj.on('close', () => {
+                    encerrarChamada();
+                });
+
+                currentCall = incomingCallObj;
+
+            } catch (err) {
+                console.error(err);
+                alert("Não foi possível abrir câmera/áudio.");
+            }
+        };
+
+        window.recusarChamada = () => {
+            if (incomingCallObj) {
+                incomingCallObj.close();
+                incomingCallObj = null;
+            }
+            document.getElementById('incoming-call-modal').classList.add('hidden');
+        };
+
+        window.encerrarChamada = () => {
+            if (currentCall) currentCall.close();
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+            document.getElementById('active-call-modal').classList.add('hidden');
+            document.getElementById('incoming-call-modal').classList.add('hidden');
+            currentCall = null;
+            localStream = null;
+        };
 
         function fileToBase64(file) {
             return new Promise((resolve, reject) => {
@@ -361,18 +498,6 @@
             } catch (err) {
                 console.error(err);
                 alert("Erro ao processar o arquivo de mídia.");
-            }
-        };
-
-        window.iniciarChamadaVoz = () => {
-            if (activeContactName) {
-                alert(`Iniciando chamada de voz com ${activeContactName}...`);
-            }
-        };
-
-        window.iniciarChamadaVideo = () => {
-            if (activeContactName) {
-                alert(`Iniciando chamada de vídeo com ${activeContactName}...`);
             }
         };
 
@@ -471,6 +596,7 @@
             }
 
             carregarContatos();
+            inicializarPeerJS();
         }
 
         function atualizarUIPerfilProprio() {
