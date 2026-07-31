@@ -1,7 +1,7 @@
 <html lang="pt-BR" class="w-full h-full m-0 p-0 overflow-hidden">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>What Chat</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -11,10 +11,20 @@
         html, body {
             width: 100vw !important;
             height: 100vh !important;
+            height: 100dvh !important; /* usa altura real da viewport visível no app/celular */
             margin: 0 !important;
             padding: 0 !important;
             overflow: hidden !important;
             font-family: 'Inter', sans-serif;
+        }
+
+        /* Empurra o conteúdo pra dentro da área segura (notch, barra de status, barra de gestos) */
+        #app-body {
+            box-sizing: border-box !important;
+            padding-top: env(safe-area-inset-top, 0px) !important;
+            padding-right: env(safe-area-inset-right, 0px) !important;
+            padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+            padding-left: env(safe-area-inset-left, 0px) !important;
         }
 
         .bg-neon-orange { background-color: #ff6b00; }
@@ -44,6 +54,20 @@
 
         .vibrate-effect {
             animation: vibrate-screen 0.2s ease-in-out 2;
+        }
+
+        /* Telas fixas em tela cheia (fixed inset-0) não herdam o padding do body,
+           então recebem a área segura individualmente */
+        #loading-screen,
+        #incoming-call-modal,
+        #active-call-modal,
+        #edit-profile-modal,
+        #add-contact-modal {
+            box-sizing: border-box !important;
+            padding-top: env(safe-area-inset-top, 0px) !important;
+            padding-right: env(safe-area-inset-right, 0px) !important;
+            padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+            padding-left: env(safe-area-inset-left, 0px) !important;
         }
 
         ::-webkit-scrollbar { width: 6px; }
