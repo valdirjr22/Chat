@@ -8,14 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        html, body {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            font-family: 'Inter', sans-serif;
-        }
+        body { font-family: 'Inter', sans-serif; }
 
         .bg-neon-orange { background-color: #ff6b00; }
         .bg-neon-orange:hover { background-color: #e05e00; }
@@ -52,7 +45,7 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body id="app-body" class="bg-slate-100 w-full h-full flex items-center justify-center p-0">
+<body id="app-body" class="bg-slate-100 h-screen w-screen flex items-center justify-center p-0 md:p-4 overflow-hidden">
 
     <div id="loading-screen" class="fixed inset-0 bg-white flex items-center justify-center z-[100]">
         <div class="text-slate-600 text-sm flex items-center gap-2">
@@ -130,9 +123,9 @@
         </div>
     </div>
 
-    <div id="chat-screen" class="bg-white w-full h-full flex overflow-hidden hidden">
+    <div id="chat-screen" class="bg-white w-full h-full max-w-[1600px] max-h-[920px] rounded-none md:rounded-2xl shadow-xl flex overflow-hidden border border-slate-200 hidden">
 
-        <div class="w-80 md:w-[360px] lg:w-[400px] bg-white border-r border-slate-200 flex flex-col h-full flex-shrink-0">
+        <div class="w-full md:w-[380px] lg:w-[420px] bg-white border-r border-slate-200 flex flex-col h-full flex-shrink-0">
             <div class="bg-slate-50 p-3.5 flex justify-between items-center border-b border-slate-200">
                 <div class="flex items-center gap-3 cursor-pointer" onclick="toggleEditProfileModal()">
                     <div id="my-profile-avatar-box" class="w-10 h-10 bg-gradient-to-tr from-sky-500 to-orange-500 rounded-xl flex items-center justify-center text-white font-bold shadow-neon overflow-hidden">
@@ -140,7 +133,7 @@
                     </div>
                     <div>
                         <h3 id="my-profile-name" class="font-bold text-slate-800 text-sm leading-tight">Meu Nome</h3>
-                        <p id="my-profile-status" class="text-[11px] text-slate-500 truncate max-w-[140px]">Disponível</p>
+                        <p id="my-profile-status" class="text-[11px] text-slate-500 truncate max-w-[160px]">Disponível</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-3 text-slate-600 text-lg">
@@ -197,7 +190,7 @@
             </div>
         </div>
 
-        <div class="flex flex-col flex-1 bg-slate-50 relative h-full min-w-0">
+        <div class="flex flex-col flex-grow bg-slate-50 relative">
 
             <div id="welcome-view" class="flex flex-col items-center justify-center h-full text-center p-8 bg-slate-50">
                 <div class="w-28 h-28 bg-gradient-to-tr from-sky-500 to-orange-500 text-white rounded-3xl flex items-center justify-center text-5xl mb-6 shadow-neon">
@@ -209,8 +202,8 @@
                 </p>
             </div>
 
-            <div id="active-chat-view" class="flex-col h-full hidden w-full">
-                <div class="p-3.5 bg-white border-b border-slate-200 flex justify-between items-center w-full">
+            <div id="active-chat-view" class="flex-col h-full hidden">
+                <div class="p-3.5 bg-white border-b border-slate-200 flex justify-between items-center">
                     <div class="flex items-center gap-3">
                         <div id="active-contact-avatar-box" class="w-10 h-10 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold shadow-blue-glow overflow-hidden">
                             <span id="active-contact-avatar">C</span>
@@ -231,9 +224,9 @@
                     </div>
                 </div>
 
-                <div id="messages-container" class="flex-grow p-6 overflow-y-auto space-y-3 bg-slate-50 flex flex-col w-full"></div>
+                <div id="messages-container" class="flex-grow p-6 overflow-y-auto space-y-3 bg-slate-50 flex flex-col"></div>
 
-                <form onsubmit="sendMessage(event)" class="p-3 bg-white border-t border-slate-200 flex items-center gap-2 w-full">
+                <form onsubmit="sendMessage(event)" class="p-3 bg-white border-t border-slate-200 flex items-center gap-2">
                     <input type="file" id="media-file-input" accept="image/*,video/*" class="hidden" onchange="enviarArquivoMidia(event)">
                     <input type="file" id="media-camera-input" accept="image/*,video/*" capture="environment" class="hidden" onchange="enviarArquivoMidia(event)">
 
@@ -357,6 +350,7 @@
         let contatosCache = [];
         let isFirstLoad = true;
 
+        // Variáveis de Chamada
         let myPeer = null;
         let currentCall = null;
         let localStream = null;
@@ -370,6 +364,7 @@
         function inicializarPeerJS() {
             if (!currentUserData || myPeer) return;
 
+            // Configuração do PeerJS com Servidores STUN Públicos do Google
             myPeer = new Peer(`whatchat_${currentUserData.username}`, {
                 config: {
                     iceServers: [
@@ -427,6 +422,7 @@
                 document.getElementById('call-contact-name').textContent = activeContactName;
                 document.getElementById('active-call-modal').classList.remove('hidden');
 
+                // Envia sinal para o Firebase para avisar o outro usuário
                 await setDoc(doc(db, "calls", activeContactUsername), {
                     from: currentUserData.username,
                     fromName: currentUserData.name,
@@ -469,6 +465,7 @@
                 document.getElementById('call-contact-name').textContent = activeCallSignalData.fromName;
                 document.getElementById('active-call-modal').classList.remove('hidden');
 
+                // Atualiza o estado da chamada no Firebase
                 await updateDoc(doc(db, "calls", currentUserData.username), {
                     status: 'accepted'
                 });
