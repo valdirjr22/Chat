@@ -76,7 +76,7 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body id="app-body" class="bg-slate-100 w-screen h-screen m-0 p-0 flex items-center justify-center overflow-hidden">
+<body id="app-body" class="bg-white w-screen h-screen m-0 p-0 flex items-center justify-center overflow-hidden">
 
     <div id="loading-screen" class="fixed inset-0 bg-white flex items-center justify-center z-[100]">
         <div class="text-slate-600 text-sm flex items-center gap-2">
