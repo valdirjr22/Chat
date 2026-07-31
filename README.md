@@ -130,7 +130,7 @@
         </div>
     </div>
 
-    <div id="chat-screen" class="bg-white w-full h-full flex overflow-hidden hidden">
+    <div id="chat-screen" class="bg-white w-full h-full relative overflow-hidden hidden">
 
         <div id="screen-contacts" class="w-full h-full bg-white flex flex-col">
             <div class="bg-slate-50 p-4 flex justify-between items-center border-b border-slate-200">
@@ -197,7 +197,7 @@
             </div>
         </div>
 
-        <div id="screen-conversation" class="w-full h-full bg-slate-50 flex flex-col hidden">
+        <div id="screen-conversation" class="w-full h-full bg-slate-50 flex flex-col hidden absolute inset-0 z-20">
             <div class="p-4 bg-white border-b border-slate-200 flex justify-between items-center w-full">
                 <div class="flex items-center gap-3">
                     <button onclick="voltarParaContatos()" class="text-slate-600 hover:text-orange-500 transition mr-1 text-lg px-2 py-1">
@@ -208,7 +208,7 @@
                     </div>
                     <div>
                         <h3 id="active-contact-name" class="font-bold text-slate-800 text-base">Contato</h3>
-                        <p id="active-contact-status" class="text-xs text-orange-500 truncate max-w-[250px]">@usuario</p>
+                        <p id="active-contact-status" class="text-xs text-orange-500 truncate max-w-[220px]">@usuario</p>
                     </div>
                 </div>
 
