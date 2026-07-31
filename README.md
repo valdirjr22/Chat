@@ -11,25 +11,20 @@
         html, body {
             width: 100vw !important;
             height: 100vh !important;
-            height: 100dvh !important;
+            height: 100dvh !important; /* usa altura real da viewport visível no app/celular */
             margin: 0 !important;
             padding: 0 !important;
             overflow: hidden !important;
             font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
         }
 
+        /* Empurra o conteúdo pra dentro da área segura (notch, barra de status, barra de gestos) */
         #app-body {
             box-sizing: border-box !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            height: 100dvh !important;
-            display: flex;
-            overflow: hidden;
-            position: fixed;
-            inset: 0;
+            padding-top: env(safe-area-inset-top, 0px) !important;
+            padding-right: env(safe-area-inset-right, 0px) !important;
+            padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+            padding-left: env(safe-area-inset-left, 0px) !important;
         }
 
         .bg-neon-orange { background-color: #ff6b00; }
@@ -61,6 +56,8 @@
             animation: vibrate-screen 0.2s ease-in-out 2;
         }
 
+        /* Telas fixas em tela cheia (fixed inset-0) não herdam o padding do body,
+           então recebem a área segura individualmente */
         #loading-screen,
         #incoming-call-modal,
         #active-call-modal,
@@ -79,7 +76,7 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body id="app-body" class="bg-slate-100 m-0 p-0 overflow-hidden">
+<body id="app-body" class="bg-slate-100 w-screen h-screen m-0 p-0 flex items-center justify-center overflow-hidden">
 
     <div id="loading-screen" class="fixed inset-0 bg-white flex items-center justify-center z-[100]">
         <div class="text-slate-600 text-sm flex items-center gap-2">
@@ -87,92 +84,90 @@
         </div>
     </div>
 
-    <div id="auth-screen" class="fixed inset-0 bg-slate-100 flex items-center justify-center z-50 p-4">
-        <div class="bg-white border border-slate-200 rounded-2xl shadow-xl w-full max-w-md p-8 text-slate-800">
-            <div class="text-center mb-6">
-                <div class="w-16 h-16 bg-gradient-to-tr from-sky-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-neon transform rotate-3">
-                    <i class="fas fa-bolt text-white text-3xl"></i>
-                </div>
-                <h2 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-sky-500 to-orange-500 bg-clip-text text-transparent">What Chat</h2>
-                <p class="text-xs text-slate-500 mt-1">Entre com usuário e senha</p>
+    <div id="auth-screen" class="bg-white border border-slate-200 rounded-2xl shadow-xl w-full max-w-md p-8 z-50 text-slate-800">
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-gradient-to-tr from-sky-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-neon transform rotate-3">
+                <i class="fas fa-bolt text-white text-3xl"></i>
             </div>
+            <h2 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-sky-500 to-orange-500 bg-clip-text text-transparent">What Chat</h2>
+            <p class="text-xs text-slate-500 mt-1">Entre com usuário e senha</p>
+        </div>
 
-            <div id="login-step" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Usuário</label>
-                    <div class="relative">
-                        <i class="fas fa-at absolute left-3 top-3.5 text-slate-400 text-sm"></i>
-                        <input type="text" id="login-username-input" placeholder="Ex: lucas.silva" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-orange-500">
-                    </div>
+        <div id="login-step" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Usuário</label>
+                <div class="relative">
+                    <i class="fas fa-at absolute left-3 top-3.5 text-slate-400 text-sm"></i>
+                    <input type="text" id="login-username-input" placeholder="Ex: lucas.silva" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-orange-500">
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Senha</label>
-                    <div class="relative">
-                        <i class="fas fa-lock absolute left-3 top-3.5 text-slate-400 text-sm"></i>
-                        <input type="password" id="login-password-input" placeholder="••••••••" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-orange-500">
-                    </div>
-                </div>
-                <button id="login-btn" onclick="fazerLogin()" class="w-full bg-neon-orange hover:bg-orange-600 text-white font-bold py-3 rounded-lg transition shadow-neon flex items-center justify-center gap-2">
-                    <span>Entrar</span> <i class="fas fa-arrow-right text-xs"></i>
-                </button>
-                <button onclick="mostrarCadastro()" class="w-full text-xs text-slate-500 hover:text-orange-500 text-center block transition">Não tem conta? Criar conta</button>
             </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Senha</label>
+                <div class="relative">
+                    <i class="fas fa-lock absolute left-3 top-3.5 text-slate-400 text-sm"></i>
+                    <input type="password" id="login-password-input" placeholder="••••••••" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-orange-500">
+                </div>
+            </div>
+            <button id="login-btn" onclick="fazerLogin()" class="w-full bg-neon-orange hover:bg-orange-600 text-white font-bold py-3 rounded-lg transition shadow-neon flex items-center justify-center gap-2">
+                <span>Entrar</span> <i class="fas fa-arrow-right text-xs"></i>
+            </button>
+            <button onclick="mostrarCadastro()" class="w-full text-xs text-slate-500 hover:text-orange-500 text-center block transition">Não tem conta? Criar conta</button>
+        </div>
 
-            <div id="cadastro-step" class="space-y-4 hidden">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Seu Nome</label>
-                    <div class="relative">
-                        <i class="fas fa-user absolute left-3 top-3.5 text-slate-400 text-sm"></i>
-                        <input type="text" id="cadastro-nome-input" placeholder="Ex: Lucas Silva" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-orange-500">
-                    </div>
+        <div id="cadastro-step" class="space-y-4 hidden">
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Seu Nome</label>
+                <div class="relative">
+                    <i class="fas fa-user absolute left-3 top-3.5 text-slate-400 text-sm"></i>
+                    <input type="text" id="cadastro-nome-input" placeholder="Ex: Lucas Silva" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-orange-500">
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Escolha um Usuário</label>
-                    <div class="relative">
-                        <i class="fas fa-at absolute left-3 top-3.5 text-slate-400 text-sm"></i>
-                        <input type="text" id="cadastro-username-input" placeholder="Ex: lucas.silva" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-orange-500">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Foto de Perfil (Arquivo do Dispositivo)</label>
-                    <input type="file" id="cadastro-avatar-file" accept="image/*" class="w-full text-xs text-slate-500 bg-slate-50 border border-slate-300 rounded-lg p-2 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-orange-500 file:text-white hover:file:bg-orange-600 cursor-pointer">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Mensagem de Perfil (Opcional)</label>
-                    <div class="relative">
-                        <i class="fas fa-quote-left absolute left-3 top-3.5 text-slate-400 text-sm"></i>
-                        <input type="text" id="cadastro-status-input" placeholder="Ex: Disponível no What Chat!" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-orange-500">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Crie uma Senha</label>
-                    <div class="relative">
-                        <i class="fas fa-lock absolute left-3 top-3.5 text-slate-400 text-sm"></i>
-                        <input type="password" id="cadastro-senha-input" placeholder="••••••••" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-orange-500">
-                    </div>
-                </div>
-                <button id="cadastro-btn" onclick="criarConta()" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 rounded-lg transition shadow-blue-glow">
-                    Criar Conta no What Chat
-                </button>
-                <button onclick="mostrarLogin()" class="w-full text-xs text-slate-500 hover:text-orange-500 text-center block transition">Já tem conta? Entrar</button>
             </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Escolha um Usuário</label>
+                <div class="relative">
+                    <i class="fas fa-at absolute left-3 top-3.5 text-slate-400 text-sm"></i>
+                    <input type="text" id="cadastro-username-input" placeholder="Ex: lucas.silva" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-orange-500">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Foto de Perfil (Arquivo do Dispositivo)</label>
+                <input type="file" id="cadastro-avatar-file" accept="image/*" class="w-full text-xs text-slate-500 bg-slate-50 border border-slate-300 rounded-lg p-2 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-orange-500 file:text-white hover:file:bg-orange-600 cursor-pointer">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Mensagem de Perfil (Opcional)</label>
+                <div class="relative">
+                    <i class="fas fa-quote-left absolute left-3 top-3.5 text-slate-400 text-sm"></i>
+                    <input type="text" id="cadastro-status-input" placeholder="Ex: Disponível no What Chat!" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-orange-500">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Crie uma Senha</label>
+                <div class="relative">
+                    <i class="fas fa-lock absolute left-3 top-3.5 text-slate-400 text-sm"></i>
+                    <input type="password" id="cadastro-senha-input" placeholder="••••••••" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-orange-500">
+                </div>
+            </div>
+            <button id="cadastro-btn" onclick="criarConta()" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 rounded-lg transition shadow-blue-glow">
+                Criar Conta no What Chat
+            </button>
+            <button onclick="mostrarLogin()" class="w-full text-xs text-slate-500 hover:text-orange-500 text-center block transition">Já tem conta? Entrar</button>
         </div>
     </div>
 
-    <div id="chat-screen" class="bg-white w-full h-full flex overflow-hidden hidden absolute inset-0">
+    <div id="chat-screen" class="bg-white w-full h-full flex overflow-hidden hidden">
 
         <div class="w-80 md:w-[350px] lg:w-[380px] bg-white border-r border-slate-200 flex flex-col h-full flex-shrink-0">
             <div class="bg-slate-50 p-3.5 flex justify-between items-center border-b border-slate-200">
                 <div class="flex items-center gap-3 cursor-pointer" onclick="toggleEditProfileModal()">
-                    <div id="my-profile-avatar-box" class="w-10 h-10 bg-gradient-to-tr from-sky-500 to-orange-500 rounded-xl flex items-center justify-center text-white font-bold shadow-neon overflow-hidden flex-shrink-0">
+                    <div id="my-profile-avatar-box" class="w-10 h-10 bg-gradient-to-tr from-sky-500 to-orange-500 rounded-xl flex items-center justify-center text-white font-bold shadow-neon overflow-hidden">
                         <span id="user-avatar-initial">W</span>
                     </div>
-                    <div class="min-w-0">
-                        <h3 id="my-profile-name" class="font-bold text-slate-800 text-sm leading-tight truncate">Meu Nome</h3>
-                        <p id="my-profile-status" class="text-[11px] text-slate-500 truncate">Disponível</p>
+                    <div>
+                        <h3 id="my-profile-name" class="font-bold text-slate-800 text-sm leading-tight">Meu Nome</h3>
+                        <p id="my-profile-status" class="text-[11px] text-slate-500 truncate max-w-[140px]">Disponível</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-3 text-slate-600 text-lg flex-shrink-0">
+                <div class="flex items-center gap-3 text-slate-600 text-lg">
                     <button title="Editar Perfil" onclick="toggleEditProfileModal()" class="hover:text-sky-600 transition"><i class="fas fa-pen"></i></button>
                     <button title="Ativar Notificações" onclick="pedirPermissaoNotificacao()" class="hover:text-yellow-500 transition"><i class="fas fa-bell"></i></button>
                     <button title="Novo Contato" onclick="toggleAddContactModal()" class="hover:text-orange-500 transition"><i class="fas fa-user-plus"></i></button>
@@ -207,7 +202,7 @@
 
                 <div id="tab-content-status" class="p-4 hidden space-y-4">
                     <div class="flex items-center gap-3 cursor-pointer p-3 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 transition" onclick="toggleEditProfileModal()">
-                        <div class="w-12 h-12 bg-sky-100 text-orange-500 rounded-full flex items-center justify-center font-bold border border-orange-500 flex-shrink-0">
+                        <div class="w-12 h-12 bg-sky-100 text-orange-500 rounded-full flex items-center justify-center font-bold border border-orange-500">
                             <i class="fas fa-plus"></i>
                         </div>
                         <div>
@@ -226,7 +221,7 @@
             </div>
         </div>
 
-        <div class="flex flex-col flex-1 bg-slate-50 relative h-full min-w-0 w-full overflow-hidden">
+        <div class="flex flex-col flex-1 bg-slate-50 relative h-full min-w-0 w-full">
 
             <div id="welcome-view" class="flex flex-col items-center justify-center h-full text-center p-8 bg-slate-50 w-full">
                 <div class="w-28 h-28 bg-gradient-to-tr from-sky-500 to-orange-500 text-white rounded-3xl flex items-center justify-center text-5xl mb-6 shadow-neon">
@@ -238,19 +233,19 @@
                 </p>
             </div>
 
-            <div id="active-chat-view" class="flex-col h-full hidden w-full overflow-hidden">
-                <div class="p-3.5 bg-white border-b border-slate-200 flex justify-between items-center w-full flex-shrink-0">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <div id="active-contact-avatar-box" class="w-10 h-10 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold shadow-blue-glow overflow-hidden flex-shrink-0">
+            <div id="active-chat-view" class="flex-col h-full hidden w-full">
+                <div class="p-3.5 bg-white border-b border-slate-200 flex justify-between items-center w-full">
+                    <div class="flex items-center gap-3">
+                        <div id="active-contact-avatar-box" class="w-10 h-10 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold shadow-blue-glow overflow-hidden">
                             <span id="active-contact-avatar">C</span>
                         </div>
-                        <div class="min-w-0">
-                            <h3 id="active-contact-name" class="font-bold text-slate-800 text-sm truncate">Contato</h3>
-                            <p id="active-contact-status" class="text-[10px] text-orange-500 truncate">@usuario</p>
+                        <div>
+                            <h3 id="active-contact-name" class="font-bold text-slate-800 text-sm">Contato</h3>
+                            <p id="active-contact-status" class="text-[10px] text-orange-500 truncate max-w-[200px]">@usuario</p>
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-4 text-slate-600 text-lg pr-2 flex-shrink-0">
+                    <div class="flex items-center gap-4 text-slate-600 text-lg pr-2">
                         <button title="Chamada de Voz" onclick="iniciarChamada(false)" class="hover:text-sky-600 transition p-1">
                             <i class="fas fa-phone"></i>
                         </button>
@@ -262,7 +257,7 @@
 
                 <div id="messages-container" class="flex-grow p-6 overflow-y-auto space-y-3 bg-slate-50 flex flex-col w-full"></div>
 
-                <form onsubmit="sendMessage(event)" class="p-3 bg-white border-t border-slate-200 flex items-center gap-2 w-full flex-shrink-0">
+                <form onsubmit="sendMessage(event)" class="p-3 bg-white border-t border-slate-200 flex items-center gap-2 w-full">
                     <input type="file" id="media-file-input" accept="image/*,video/*" class="hidden" onchange="enviarArquivoMidia(event)">
                     <input type="file" id="media-camera-input" accept="image/*,video/*" capture="environment" class="hidden" onchange="enviarArquivoMidia(event)">
 
@@ -403,15 +398,30 @@
                 config: {
                     iceServers: [
                         { urls: 'stun:stun.l.google.com:19302' },
-                        { urls: 'stun:stun1.l.google.com:19302' }
+                        { urls: 'stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' },
+                        { urls: 'stun:stun.stunprotocol.org:3478' }
                     ]
+                }
+            });
+
+            myPeer.on('open', (id) => {
+                console.log('Conectado ao servidor PeerJS com ID:', id);
+            });
+
+            myPeer.on('error', (err) => {
+                console.error('Erro no PeerJS:', err);
+                if (err.type === 'peer-unavailable') {
+                    alert('O contato não está online ou conectado ao sistema de chamadas no momento.');
                 }
             });
 
             myPeer.on('call', (call) => {
                 currentCall = call;
                 call.on('stream', (remoteStream) => {
-                    document.getElementById('remote-video').srcObject = remoteStream;
+                    const remoteVideo = document.getElementById('remote-video');
+                    remoteVideo.srcObject = remoteStream;
+                    remoteVideo.play().catch(e => console.log("Erro ao reproduzir vídeo remoto:", e));
                 });
                 call.on('close', () => {
                     encerrarChamadaUI();
@@ -470,7 +480,9 @@
                 if (call) {
                     currentCall = call;
                     call.on('stream', (remoteStream) => {
-                        document.getElementById('remote-video').srcObject = remoteStream;
+                        const remoteVideo = document.getElementById('remote-video');
+                        remoteVideo.srcObject = remoteStream;
+                        remoteVideo.play().catch(e => console.log("Erro ao reproduzir vídeo remoto:", e));
                     });
                     call.on('close', () => {
                         encerrarChamada();
@@ -504,11 +516,18 @@
 
                 if (currentCall) {
                     currentCall.answer(localStream);
+                    currentCall.on('stream', (remoteStream) => {
+                        const remoteVideo = document.getElementById('remote-video');
+                        remoteVideo.srcObject = remoteStream;
+                        remoteVideo.play().catch(e => console.log("Erro ao reproduzir vídeo remoto:", e));
+                    });
                 } else {
                     const call = myPeer.call(`whatchat_${activeCallSignalData.from}`, localStream);
                     currentCall = call;
                     call.on('stream', (remoteStream) => {
-                        document.getElementById('remote-video').srcObject = remoteStream;
+                        const remoteVideo = document.getElementById('remote-video');
+                        remoteVideo.srcObject = remoteStream;
+                        remoteVideo.play().catch(e => console.log("Erro ao reproduzir vídeo remoto:", e));
                     });
                 }
 
@@ -835,15 +854,15 @@
                 item.onclick = () => window.selectContact(user);
 
                 const avatarHTML = user.avatar
-                    ? `<img src="${user.avatar}" class="w-11 h-11 rounded-xl object-cover shadow-blue-glow flex-shrink-0">`
-                    : `<div class="w-11 h-11 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-blue-glow flex-shrink-0">${user.name.charAt(0).toUpperCase()}</div>`;
+                    ? `<img src="${user.avatar}" class="w-11 h-11 rounded-xl object-cover shadow-blue-glow">`
+                    : `<div class="w-11 h-11 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-blue-glow">${user.name.charAt(0).toUpperCase()}</div>`;
 
                 item.innerHTML = `
                     ${avatarHTML}
                     <div class="flex-grow min-w-0">
                         <div class="flex justify-between items-center">
                             <h4 class="font-semibold text-slate-800 text-sm truncate">${user.name}</h4>
-                            <span class="text-[9px] text-orange-500 font-bold uppercase ml-2 flex-shrink-0">@${user.username}</span>
+                            <span class="text-[9px] text-orange-500 font-bold uppercase ml-2">@${user.username}</span>
                         </div>
                         <p class="text-xs text-slate-400 truncate">${user.status || 'Clique para abrir a conversa'}</p>
                     </div>
@@ -911,7 +930,7 @@
 
                     let contentHTML = '';
                     if (msg.text) {
-                        contentHTML += `<div class="pr-6 break-words">${msg.text}</div>`;
+                        contentHTML += `<div class="pr-6">${msg.text}</div>`;
                     }
                     if (msg.image) {
                         const fileName = msg.fileName || 'imagem.png';
