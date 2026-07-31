@@ -130,20 +130,20 @@
         </div>
     </div>
 
-    <div id="chat-screen" class="bg-white w-full h-full relative overflow-hidden hidden">
+    <div id="chat-screen" class="bg-white w-full h-full flex overflow-hidden hidden">
 
-        <div id="screen-contacts" class="w-full h-full bg-white flex flex-col">
-            <div class="bg-slate-50 p-4 flex justify-between items-center border-b border-slate-200">
+        <div class="w-80 md:w-[350px] lg:w-[380px] bg-white border-r border-slate-200 flex flex-col h-full flex-shrink-0">
+            <div class="bg-slate-50 p-3.5 flex justify-between items-center border-b border-slate-200">
                 <div class="flex items-center gap-3 cursor-pointer" onclick="toggleEditProfileModal()">
-                    <div id="my-profile-avatar-box" class="w-12 h-12 bg-gradient-to-tr from-sky-500 to-orange-500 rounded-xl flex items-center justify-center text-white font-bold shadow-neon overflow-hidden">
+                    <div id="my-profile-avatar-box" class="w-10 h-10 bg-gradient-to-tr from-sky-500 to-orange-500 rounded-xl flex items-center justify-center text-white font-bold shadow-neon overflow-hidden">
                         <span id="user-avatar-initial">W</span>
                     </div>
                     <div>
-                        <h3 id="my-profile-name" class="font-bold text-slate-800 text-base leading-tight">Meu Nome</h3>
-                        <p id="my-profile-status" class="text-xs text-slate-500 truncate max-w-[200px]">Disponível</p>
+                        <h3 id="my-profile-name" class="font-bold text-slate-800 text-sm leading-tight">Meu Nome</h3>
+                        <p id="my-profile-status" class="text-[11px] text-slate-500 truncate max-w-[140px]">Disponível</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-4 text-slate-600 text-xl">
+                <div class="flex items-center gap-3 text-slate-600 text-lg">
                     <button title="Editar Perfil" onclick="toggleEditProfileModal()" class="hover:text-sky-600 transition"><i class="fas fa-pen"></i></button>
                     <button title="Ativar Notificações" onclick="pedirPermissaoNotificacao()" class="hover:text-yellow-500 transition"><i class="fas fa-bell"></i></button>
                     <button title="Novo Contato" onclick="toggleAddContactModal()" class="hover:text-orange-500 transition"><i class="fas fa-user-plus"></i></button>
@@ -151,7 +151,7 @@
                 </div>
             </div>
 
-            <div class="flex border-b border-slate-200 bg-white text-sm font-semibold text-slate-500">
+            <div class="flex border-b border-slate-200 bg-white text-xs font-semibold text-slate-500">
                 <button onclick="switchTab('chats')" id="tab-btn-chats" class="tab-btn active flex-1 py-3 text-center transition flex items-center justify-center gap-2">
                     <i class="fas fa-comments"></i> Conversas
                 </button>
@@ -163,84 +163,95 @@
                 </button>
             </div>
 
-            <div class="p-4 bg-white border-b border-slate-200">
+            <div class="p-3 bg-white border-b border-slate-200">
                 <div class="relative">
-                    <i class="fas fa-search absolute left-3 top-3 text-slate-400 text-sm"></i>
-                    <input type="text" id="search-input" onkeyup="filterContacts()" placeholder="Buscar nos seus contatos..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-orange-500">
+                    <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                    <input type="text" id="search-input" onkeyup="filterContacts()" placeholder="Buscar no What Chat..." class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-orange-500">
                 </div>
             </div>
 
             <div class="flex-grow overflow-y-auto bg-white">
                 <div id="tab-content-chats" class="divide-y divide-slate-100">
                     <div id="contacts-list"></div>
-                    <p id="contacts-empty" class="text-sm text-slate-400 text-center py-10 hidden">Nenhum contato ainda. Clique em <i class="fas fa-user-plus"></i> para adicionar.</p>
+                    <p id="contacts-empty" class="text-xs text-slate-400 text-center py-6 hidden">Nenhum contato ainda. Clique em <i class="fas fa-user-plus"></i> para adicionar.</p>
                 </div>
 
-                <div id="tab-content-status" class="p-6 hidden space-y-4">
-                    <div class="flex items-center gap-4 cursor-pointer p-4 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-200 transition" onclick="toggleEditProfileModal()">
-                        <div class="w-14 h-14 bg-sky-100 text-orange-500 rounded-full flex items-center justify-center font-bold text-lg border border-orange-500">
+                <div id="tab-content-status" class="p-4 hidden space-y-4">
+                    <div class="flex items-center gap-3 cursor-pointer p-3 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 transition" onclick="toggleEditProfileModal()">
+                        <div class="w-12 h-12 bg-sky-100 text-orange-500 rounded-full flex items-center justify-center font-bold border border-orange-500">
                             <i class="fas fa-plus"></i>
                         </div>
                         <div>
-                            <h4 class="font-bold text-base text-slate-800">Atualizar Perfil & Recado</h4>
+                            <h4 class="font-bold text-sm text-slate-800">Atualizar Perfil & Recado</h4>
                             <p class="text-xs text-slate-500">Edite seu status ou foto no What Chat</p>
                         </div>
                     </div>
                 </div>
 
-                <div id="tab-content-calls" class="p-6 hidden">
-                    <div class="text-center py-16 text-slate-400">
-                        <i class="fas fa-phone-slash text-4xl mb-3 text-slate-300"></i>
-                        <p class="text-sm">Nenhuma chamada registrada.</p>
+                <div id="tab-content-calls" class="p-4 hidden">
+                    <div class="text-center py-10 text-slate-400">
+                        <i class="fas fa-phone-slash text-3xl mb-2 text-slate-300"></i>
+                        <p class="text-xs">Nenhuma chamada registrada.</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="screen-conversation" class="w-full h-full bg-slate-50 flex flex-col hidden absolute inset-0 z-20">
-            <div class="p-4 bg-white border-b border-slate-200 flex justify-between items-center w-full">
-                <div class="flex items-center gap-3">
-                    <button onclick="voltarParaContatos()" class="text-slate-600 hover:text-orange-500 transition mr-1 text-lg px-2 py-1">
-                        <i class="fas fa-arrow-left"></i>
-                    </button>
-                    <div id="active-contact-avatar-box" class="w-11 h-11 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold shadow-blue-glow overflow-hidden">
-                        <span id="active-contact-avatar">C</span>
-                    </div>
-                    <div>
-                        <h3 id="active-contact-name" class="font-bold text-slate-800 text-base">Contato</h3>
-                        <p id="active-contact-status" class="text-xs text-orange-500 truncate max-w-[220px]">@usuario</p>
-                    </div>
-                </div>
+        <div class="flex flex-col flex-1 bg-slate-50 relative h-full min-w-0 w-full">
 
-                <div class="flex items-center gap-5 text-slate-600 text-xl pr-2">
-                    <button title="Chamada de Voz" onclick="iniciarChamada(false)" class="hover:text-sky-600 transition p-1">
-                        <i class="fas fa-phone"></i>
-                    </button>
-                    <button title="Chamada de Vídeo" onclick="iniciarChamada(true)" class="hover:text-orange-500 transition p-1">
-                        <i class="fas fa-video"></i>
-                    </button>
+            <div id="welcome-view" class="flex flex-col items-center justify-center h-full text-center p-8 bg-slate-50 w-full">
+                <div class="w-28 h-28 bg-gradient-to-tr from-sky-500 to-orange-500 text-white rounded-3xl flex items-center justify-center text-5xl mb-6 shadow-neon">
+                    <i class="fas fa-bolt"></i>
                 </div>
+                <h1 class="text-3xl font-extrabold bg-gradient-to-r from-sky-500 to-orange-500 bg-clip-text text-transparent mb-2">What Chat Web</h1>
+                <p class="text-xs text-slate-500 max-w-md leading-relaxed">
+                    Selecione um contato na lista ao lado para abrir a guia de conversa.
+                </p>
             </div>
 
-            <div id="messages-container" class="flex-grow p-6 overflow-y-auto space-y-3 bg-slate-50 flex flex-col w-full"></div>
+            <div id="active-chat-view" class="flex-col h-full hidden w-full">
+                <div class="p-3.5 bg-white border-b border-slate-200 flex justify-between items-center w-full">
+                    <div class="flex items-center gap-3">
+                        <div id="active-contact-avatar-box" class="w-10 h-10 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold shadow-blue-glow overflow-hidden">
+                            <span id="active-contact-avatar">C</span>
+                        </div>
+                        <div>
+                            <h3 id="active-contact-name" class="font-bold text-slate-800 text-sm">Contato</h3>
+                            <p id="active-contact-status" class="text-[10px] text-orange-500 truncate max-w-[200px]">@usuario</p>
+                        </div>
+                    </div>
 
-            <form onsubmit="sendMessage(event)" class="p-4 bg-white border-t border-slate-200 flex items-center gap-3 w-full">
-                <input type="file" id="media-file-input" accept="image/*,video/*" class="hidden" onchange="enviarArquivoMidia(event)">
-                <input type="file" id="media-camera-input" accept="image/*,video/*" capture="environment" class="hidden" onchange="enviarArquivoMidia(event)">
+                    <div class="flex items-center gap-4 text-slate-600 text-lg pr-2">
+                        <button title="Chamada de Voz" onclick="iniciarChamada(false)" class="hover:text-sky-600 transition p-1">
+                            <i class="fas fa-phone"></i>
+                        </button>
+                        <button title="Chamada de Vídeo" onclick="iniciarChamada(true)" class="hover:text-orange-500 transition p-1">
+                            <i class="fas fa-video"></i>
+                        </button>
+                    </div>
+                </div>
 
-                <button type="button" title="Anexar Foto/Vídeo do Equipamento" onclick="document.getElementById('media-file-input').click()" class="text-slate-500 hover:text-sky-600 p-2 transition text-lg">
-                    <i class="fas fa-paperclip"></i>
-                </button>
-                <button type="button" title="Tirar Foto ou Gravar Vídeo" onclick="document.getElementById('media-camera-input').click()" class="text-slate-500 hover:text-orange-500 p-2 transition text-lg">
-                    <i class="fas fa-camera"></i>
-                </button>
+                <div id="messages-container" class="flex-grow p-6 overflow-y-auto space-y-3 bg-slate-50 flex flex-col w-full"></div>
 
-                <input type="text" id="message-input" placeholder="Digite sua mensagem..." class="flex-grow py-3 px-4 bg-slate-100 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-orange-500">
-                
-                <button type="submit" id="send-btn" class="bg-neon-orange hover:bg-orange-600 text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-neon transition flex-shrink-0 text-base">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
-            </form>
+                <form onsubmit="sendMessage(event)" class="p-3 bg-white border-t border-slate-200 flex items-center gap-2 w-full">
+                    <input type="file" id="media-file-input" accept="image/*,video/*" class="hidden" onchange="enviarArquivoMidia(event)">
+                    <input type="file" id="media-camera-input" accept="image/*,video/*" capture="environment" class="hidden" onchange="enviarArquivoMidia(event)">
+
+                    <button type="button" title="Anexar Foto/Vídeo do Equipamento" onclick="document.getElementById('media-file-input').click()" class="text-slate-500 hover:text-sky-600 p-2 transition text-base">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+                    <button type="button" title="Tirar Foto ou Gravar Vídeo" onclick="document.getElementById('media-camera-input').click()" class="text-slate-500 hover:text-orange-500 p-2 transition text-base">
+                        <i class="fas fa-camera"></i>
+                    </button>
+
+                    <input type="text" id="message-input" placeholder="Digite sua mensagem..." class="flex-grow py-2.5 px-4 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-orange-500">
+                    
+                    <button type="submit" id="send-btn" class="bg-neon-orange hover:bg-orange-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-neon transition flex-shrink-0">
+                        <i class="fas fa-paper-plane text-sm"></i>
+                    </button>
+                </form>
+            </div>
+
         </div>
 
     </div>
@@ -791,21 +802,21 @@
 
             filtrados.forEach(user => {
                 const item = document.createElement('div');
-                item.className = "p-4 hover:bg-slate-50 cursor-pointer flex items-center gap-4 transition border-b border-slate-100";
+                item.className = "p-3 hover:bg-slate-50 cursor-pointer flex items-center gap-3 transition border-b border-slate-100";
                 item.onclick = () => window.selectContact(user);
 
                 const avatarHTML = user.avatar
-                    ? `<img src="${user.avatar}" class="w-12 h-12 rounded-xl object-cover shadow-blue-glow">`
-                    : `<div class="w-12 h-12 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold text-base shadow-blue-glow">${user.name.charAt(0).toUpperCase()}</div>`;
+                    ? `<img src="${user.avatar}" class="w-11 h-11 rounded-xl object-cover shadow-blue-glow">`
+                    : `<div class="w-11 h-11 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-blue-glow">${user.name.charAt(0).toUpperCase()}</div>`;
 
                 item.innerHTML = `
                     ${avatarHTML}
                     <div class="flex-grow min-w-0">
                         <div class="flex justify-between items-center">
                             <h4 class="font-semibold text-slate-800 text-sm truncate">${user.name}</h4>
-                            <span class="text-[10px] text-orange-500 font-bold uppercase ml-2">@${user.username}</span>
+                            <span class="text-[9px] text-orange-500 font-bold uppercase ml-2">@${user.username}</span>
                         </div>
-                        <p class="text-xs text-slate-400 truncate mt-0.5">${user.status || 'Toque para abrir a conversa'}</p>
+                        <p class="text-xs text-slate-400 truncate">${user.status || 'Clique para abrir a conversa'}</p>
                     </div>
                 `;
                 list.appendChild(item);
@@ -821,9 +832,11 @@
             activeContactName = user.name;
             isFirstLoad = true;
             
-            // Oculta a Tela 1 (Contatos) e mostra a Tela 2 (Conversa)
-            document.getElementById('screen-contacts').classList.add('hidden');
-            document.getElementById('screen-conversation').classList.remove('hidden');
+            // Oculta a tela de boas-vindas e exibe o chat ativo ao clicar no contato
+            document.getElementById('welcome-view').classList.add('hidden');
+            const activeView = document.getElementById('active-chat-view');
+            activeView.classList.remove('hidden');
+            activeView.classList.add('flex');
 
             let freshUser = user;
             try {
@@ -844,13 +857,6 @@
             listenToMessages();
         };
 
-        window.voltarParaContatos = () => {
-            if (unsubscribeMessages) unsubscribeMessages();
-            // Oculta a Tela 2 (Conversa) e retorna para a Tela 1 (Contatos)
-            document.getElementById('screen-conversation').classList.add('hidden');
-            document.getElementById('screen-contacts').classList.remove('hidden');
-        };
-
         function listenToMessages() {
             if (unsubscribeMessages) unsubscribeMessages();
 
@@ -869,7 +875,7 @@
                     const isSent = msg.sender === currentUserData.username;
 
                     const bubble = document.createElement('div');
-                    bubble.className = `max-w-[75%] p-3.5 rounded-2xl text-xs relative group ${
+                    bubble.className = `max-w-[70%] p-3 rounded-2xl text-xs relative group ${
                         isSent
                             ? 'bg-sky-600 text-white self-end rounded-tr-none shadow-blue-glow'
                             : 'bg-white text-slate-800 border border-slate-200 self-start rounded-tl-none shadow-sm'
@@ -877,7 +883,7 @@
 
                     let contentHTML = '';
                     if (msg.text) {
-                        contentHTML += `<div class="pr-6 text-sm">${msg.text}</div>`;
+                        contentHTML += `<div class="pr-6">${msg.text}</div>`;
                     }
                     if (msg.image) {
                         const fileName = msg.fileName || 'imagem.png';
@@ -895,7 +901,7 @@
                         contentHTML += `
                             <div class="relative group my-1">
                                 <video src="${msg.video}" controls class="rounded-xl max-w-full max-h-60 border border-slate-200"></video>
-                                <a href="${msg.video}" download="${fileName}" title="Baixar Vídeo" class="mt-1 inline-flex items-center gap-1.5 text-xs font-semibold ${isSent ? 'text-sky-100 hover:text-white' : 'text-sky-600 hover:text-sky-700'}">
+                                <a href="${msg.video}" download="${fileName}" title="Baixar Vídeo" class="mt-1 inline-flex items-center gap-1.5 text-[11px] font-semibold ${isSent ? 'text-sky-100 hover:text-white' : 'text-sky-600 hover:text-sky-700'}">
                                     <i class="fas fa-download"></i> Baixar Vídeo
                                 </a>
                             </div>
@@ -904,7 +910,7 @@
 
                     contentHTML += `
                         <button onclick="apagarMensagem('${msgId}')" title="Apagar Mensagem" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition ${isSent ? 'text-sky-200 hover:text-white' : 'text-slate-400 hover:text-red-500'}">
-                            <i class="fas fa-trash-alt text-xs"></i>
+                            <i class="fas fa-trash-alt text-[11px]"></i>
                         </button>
                     `;
 
