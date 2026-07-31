@@ -256,7 +256,7 @@
             </div>
             <div>
                 <h4 id="incoming-caller-name" class="font-bold text-slate-800 text-lg">Contato</h4>
-                <p class="text-xs text-slate-500">Está te chamando...</p>
+                <p id="incoming-call-type" class="text-xs text-slate-500">Recebendo chamada de vídeo...</p>
             </div>
             <div class="flex justify-center gap-4 pt-2">
                 <button onclick="recusarChamada()" class="px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl text-xs flex items-center gap-2 transition">
@@ -346,14 +346,16 @@
         let activeContactUsername = null;
         let activeContactName = "Contato";
         let unsubscribeMessages = null;
+        let unsubscribeCalls = null;
         let contatosCache = [];
         let isFirstLoad = true;
 
-        // Variáveis do PeerJS (Chamadas em Tempo Real)
+        // Variáveis de Chamada
         let myPeer = null;
         let currentCall = null;
         let localStream = null;
-        let incomingCallObj = null;
+        let activeCallSignalData = null;
+        let isVideoCall = true;
 
         function normalizarUsuario(u) {
             return (u || '').trim().toLowerCase().replace(/\s+/g, '');
@@ -361,20 +363,54 @@
 
         function inicializarPeerJS() {
             if (!currentUserData || myPeer) return;
-            
-            // Cria ID único no PeerJS baseado no nome de usuário
-            myPeer = new Peer(`whatchat_${currentUserData.username}`);
+
+            // Configuração do PeerJS com Servidores STUN Públicos do Google
+            myPeer = new Peer(`whatchat_${currentUserData.username}`, {
+                config: {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' }
+                    ]
+                }
+            });
 
             myPeer.on('call', (call) => {
-                incomingCallObj = call;
-                const callerUsername = call.peer.replace('whatchat_', '');
-                document.getElementById('incoming-caller-name').textContent = callerUsername;
-                document.getElementById('incoming-call-modal').classList.remove('hidden');
+                currentCall = call;
+                call.on('stream', (remoteStream) => {
+                    document.getElementById('remote-video').srcObject = remoteStream;
+                });
+                call.on('close', () => {
+                    encerrarChamadaUI();
+                });
+            });
+
+            ouvirChamadasEntrantes();
+        }
+
+        function ouvirChamadasEntrantes() {
+            if (!currentUserData) return;
+            const callDocRef = doc(db, "calls", currentUserData.username);
+
+            unsubscribeCalls = onSnapshot(callDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.status === 'calling') {
+                        activeCallSignalData = data;
+                        document.getElementById('incoming-caller-name').textContent = data.fromName || data.from;
+                        document.getElementById('incoming-call-type').textContent = data.isVideo ? "Chamada de Vídeo..." : "Chamada de Voz...";
+                        document.getElementById('incoming-call-modal').classList.remove('hidden');
+                        
+                        if ("vibrate" in navigator) navigator.vibrate([300, 200, 300, 200]);
+                    } else if (data.status === 'ended' || data.status === 'rejected') {
+                        encerrarChamadaUI();
+                    }
+                }
             });
         }
 
         window.iniciarChamada = async (isVideo) => {
             if (!activeContactUsername) return;
+            isVideoCall = isVideo;
 
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({
@@ -386,71 +422,103 @@
                 document.getElementById('call-contact-name').textContent = activeContactName;
                 document.getElementById('active-call-modal').classList.remove('hidden');
 
+                // Envia sinal para o Firebase para avisar o outro usuário
+                await setDoc(doc(db, "calls", activeContactUsername), {
+                    from: currentUserData.username,
+                    fromName: currentUserData.name,
+                    isVideo: isVideo,
+                    status: 'calling',
+                    timestamp: new Date()
+                });
+
                 const targetPeerId = `whatchat_${activeContactUsername}`;
                 const call = myPeer.call(targetPeerId, localStream);
 
-                call.on('stream', (remoteStream) => {
-                    document.getElementById('remote-video').srcObject = remoteStream;
-                });
-
-                call.on('close', () => {
-                    encerrarChamada();
-                });
-
-                currentCall = call;
+                if (call) {
+                    currentCall = call;
+                    call.on('stream', (remoteStream) => {
+                        document.getElementById('remote-video').srcObject = remoteStream;
+                    });
+                    call.on('close', () => {
+                        encerrarChamada();
+                    });
+                }
 
             } catch (err) {
                 console.error(err);
-                alert("Não foi possível acessar a câmera ou microfone.");
+                alert("Não foi possível acessar a câmera ou microfone. Verifique as permissões.");
             }
         };
 
         window.atenderChamada = async () => {
-            if (!incomingCallObj) return;
+            if (!activeCallSignalData) return;
 
             document.getElementById('incoming-call-modal').classList.add('hidden');
 
             try {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                document.getElementById('local-video').srcObject = localStream;
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: activeCallSignalData.isVideo,
+                    audio: true
+                });
 
-                incomingCallObj.answer(localStream);
+                document.getElementById('local-video').srcObject = localStream;
+                document.getElementById('call-contact-name').textContent = activeCallSignalData.fromName;
                 document.getElementById('active-call-modal').classList.remove('hidden');
 
-                incomingCallObj.on('stream', (remoteStream) => {
-                    document.getElementById('remote-video').srcObject = remoteStream;
+                // Atualiza o estado da chamada no Firebase
+                await updateDoc(doc(db, "calls", currentUserData.username), {
+                    status: 'accepted'
                 });
 
-                incomingCallObj.on('close', () => {
-                    encerrarChamada();
-                });
-
-                currentCall = incomingCallObj;
+                if (currentCall) {
+                    currentCall.answer(localStream);
+                } else {
+                    const call = myPeer.call(`whatchat_${activeCallSignalData.from}`, localStream);
+                    currentCall = call;
+                    call.on('stream', (remoteStream) => {
+                        document.getElementById('remote-video').srcObject = remoteStream;
+                    });
+                }
 
             } catch (err) {
                 console.error(err);
-                alert("Não foi possível abrir câmera/áudio.");
+                alert("Erro ao conectar áudio/vídeo.");
             }
         };
 
-        window.recusarChamada = () => {
-            if (incomingCallObj) {
-                incomingCallObj.close();
-                incomingCallObj = null;
+        window.recusarChamada = async () => {
+            if (activeCallSignalData) {
+                await setDoc(doc(db, "calls", currentUserData.username), { status: 'rejected' });
             }
-            document.getElementById('incoming-call-modal').classList.add('hidden');
+            encerrarChamadaUI();
         };
 
-        window.encerrarChamada = () => {
-            if (currentCall) currentCall.close();
+        window.encerrarChamada = async () => {
+            if (activeContactUsername) {
+                await setDoc(doc(db, "calls", activeContactUsername), { status: 'ended' });
+            }
+            if (currentUserData) {
+                await setDoc(doc(db, "calls", currentUserData.username), { status: 'ended' });
+            }
+            encerrarChamadaUI();
+        };
+
+        function encerrarChamadaUI() {
+            if (currentCall) {
+                currentCall.close();
+                currentCall = null;
+            }
             if (localStream) {
                 localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
             }
+            activeCallSignalData = null;
+
             document.getElementById('active-call-modal').classList.add('hidden');
             document.getElementById('incoming-call-modal').classList.add('hidden');
-            currentCall = null;
-            localStream = null;
-        };
+            document.getElementById('remote-video').srcObject = null;
+            document.getElementById('local-video').srcObject = null;
+        }
 
         function fileToBase64(file) {
             return new Promise((resolve, reject) => {
@@ -836,7 +904,6 @@
                         `;
                     }
 
-                    // Botão para apagar mensagem
                     contentHTML += `
                         <button onclick="apagarMensagem('${msgId}')" title="Apagar Mensagem" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition ${isSent ? 'text-sky-200 hover:text-white' : 'text-slate-400 hover:text-red-500'}">
                             <i class="fas fa-trash-alt text-[11px]"></i>
