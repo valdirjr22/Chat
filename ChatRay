@@ -8,20 +8,26 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        
+
+        /* Cores Neon & Efeitos Personalizados */
         .bg-neon-orange { background-color: #ff6b00; }
         .bg-neon-orange:hover { background-color: #e05e00; }
         .text-neon-orange { color: #ff6b00; }
+        .border-neon-orange { border-color: #ff6b00; }
+
         .shadow-neon { box-shadow: 0 0 15px rgba(255, 107, 0, 0.4); }
         .shadow-blue-glow { box-shadow: 0 0 15px rgba(14, 165, 233, 0.3); }
 
-        .tab-btn.active { 
-            color: #ff6b00; 
-            border-bottom: 3px solid #ff6b00; 
+        /* Estilização da Aba Ativa em Azul/Laranja */
+        .tab-btn.active {
+            color: #ff6b00;
+            border-bottom: 3px solid #ff6b00;
             font-weight: 700;
         }
+
         .hidden { display: none !important; }
-        
+
+        /* Scrollbar Personalizada */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 10px; }
@@ -30,98 +36,161 @@
 </head>
 <body class="bg-slate-900 h-screen w-screen flex items-center justify-center p-0 md:p-4 overflow-hidden">
 
-    <div id="auth-screen" class="bg-slate-800 border border-slate-700 rounded-2xl shadow-blue-glow w-full max-w-md p-8 z-50 text-white">
+    <div id="loading-screen" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-[100]">
+        <div class="text-slate-400 text-sm flex items-center gap-2">
+            <i class="fas fa-circle-notch fa-spin text-orange-400"></i> Carregando...
+        </div>
+    </div>
+
+    <div id="auth-screen" class="bg-slate-800 border border-slate-700 rounded-2xl shadow-blue-glow w-full max-w-md p-8 z-50 text-white hidden">
         <div class="text-center mb-6">
-            <div class="w-16 h-16 bg-gradient-to-tr from-sky-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-neon">
+            <div class="w-16 h-16 bg-gradient-to-tr from-sky-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-neon transform rotate-3">
                 <i class="fas fa-bolt text-white text-3xl"></i>
             </div>
-            <h2 class="text-3xl font-extrabold bg-gradient-to-r from-sky-400 to-orange-500 bg-clip-text text-transparent">What Chat</h2>
-            <p class="text-xs text-slate-400 mt-1">Cadastre-se ou entre com seu número de celular</p>
+            <h2 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-sky-400 to-orange-500 bg-clip-text text-transparent">What Chat</h2>
+            <p class="text-xs text-slate-400 mt-1">Entre com usuário e senha</p>
         </div>
 
-        <div id="phone-step" class="space-y-4">
+        <div id="login-step" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Usuário</label>
+                <div class="relative">
+                    <i class="fas fa-at absolute left-3 top-3.5 text-slate-400 text-sm"></i>
+                    <input type="text" id="login-username-input" placeholder="Ex: lucas.silva" class="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-orange-500">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Senha</label>
+                <div class="relative">
+                    <i class="fas fa-lock absolute left-3 top-3.5 text-slate-400 text-sm"></i>
+                    <input type="password" id="login-password-input" placeholder="••••••••" class="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-orange-500">
+                </div>
+            </div>
+            <button id="login-btn" onclick="fazerLogin()" class="w-full bg-neon-orange hover:bg-orange-600 text-white font-bold py-3 rounded-lg transition shadow-neon flex items-center justify-center gap-2">
+                <span>Entrar</span> <i class="fas fa-arrow-right text-xs"></i>
+            </button>
+            <button onclick="mostrarCadastro()" class="w-full text-xs text-slate-400 hover:text-orange-400 text-center block transition">Não tem conta? Criar conta</button>
+        </div>
+
+        <div id="cadastro-step" class="space-y-4 hidden">
             <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-1">Seu Nome</label>
                 <div class="relative">
                     <i class="fas fa-user absolute left-3 top-3.5 text-slate-400 text-sm"></i>
-                    <input type="text" id="user-name-input" placeholder="Ex: Lucas Silva" class="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-orange-500">
+                    <input type="text" id="cadastro-nome-input" placeholder="Ex: Lucas Silva" class="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-orange-500">
                 </div>
             </div>
             <div>
-                <label class="block text-xs font-semibold text-slate-300 mb-1">Número de Celular (ex: +5581986422797)</label>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Escolha um Usuário</label>
                 <div class="relative">
-                    <i class="fas fa-phone absolute left-3 top-3.5 text-slate-400 text-sm"></i>
-                    <input type="tel" id="phone-input" placeholder="+5581986422797" class="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-orange-500">
+                    <i class="fas fa-at absolute left-3 top-3.5 text-slate-400 text-sm"></i>
+                    <input type="text" id="cadastro-username-input" placeholder="Ex: lucas.silva" class="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-orange-500">
                 </div>
             </div>
-            <div id="recaptcha-container" class="my-2"></div>
-            <button onclick="sendSMS()" class="w-full bg-neon-orange hover:bg-orange-600 text-white font-bold py-3 rounded-lg transition shadow-neon flex items-center justify-center gap-2">
-                <span>Enviar Código SMS</span> <i class="fas fa-paper-plane text-xs"></i>
-            </button>
-        </div>
-
-        <div id="code-step" class="space-y-4 hidden">
-            <p class="text-xs text-center text-slate-300">Insira o código de 6 dígitos enviado por SMS</p>
             <div>
-                <input type="text" id="code-input" maxlength="6" placeholder="000000" class="w-full py-3 bg-slate-900 border border-orange-500 rounded-lg text-center tracking-widest text-2xl font-bold text-orange-400 focus:outline-none">
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Crie uma Senha</label>
+                <div class="relative">
+                    <i class="fas fa-lock absolute left-3 top-3.5 text-slate-400 text-sm"></i>
+                    <input type="password" id="cadastro-senha-input" placeholder="••••••••" class="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-orange-500">
+                </div>
             </div>
-            <button onclick="verifySMSCode()" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 rounded-lg transition shadow-blue-glow">
-                Confirmar e Entrar
+            <button id="cadastro-btn" onclick="criarConta()" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 rounded-lg transition shadow-blue-glow">
+                Criar Conta no What Chat
             </button>
+            <button onclick="mostrarLogin()" class="w-full text-xs text-slate-400 hover:text-orange-400 text-center block transition">Já tem conta? Entrar</button>
         </div>
     </div>
 
     <div id="chat-screen" class="bg-slate-900 w-full h-full max-w-[1600px] max-h-[920px] rounded-none md:rounded-2xl shadow-2xl flex overflow-hidden hidden border border-slate-800">
 
         <div class="w-full md:w-[380px] lg:w-[420px] bg-slate-900 border-r border-slate-800 flex flex-col h-full flex-shrink-0">
-            
+
             <div class="bg-slate-800 p-3.5 flex justify-between items-center border-b border-slate-700">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-gradient-to-tr from-sky-500 to-orange-500 rounded-xl flex items-center justify-center text-white font-bold shadow-neon">
                         <span id="user-avatar-initial">W</span>
                     </div>
                     <div>
-                        <h3 id="my-profile-name" class="font-bold text-white text-sm">Meu Nome</h3>
-                        <p id="my-profile-phone" class="text-[11px] text-orange-400">+55...</p>
+                        <h3 id="my-profile-name" class="font-bold text-white text-sm leading-tight">Meu Nome</h3>
+                        <p id="my-profile-username" class="text-[11px] text-sky-400">@usuario</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-3 text-slate-300 text-lg">
-                    <button title="Adicionar Contato" onclick="toggleAddContactModal()" class="hover:text-orange-400 transition"><i class="fas fa-user-plus"></i></button>
+                    <button title="Novo Contato" onclick="toggleAddContactModal()" class="hover:text-orange-400 transition"><i class="fas fa-user-plus"></i></button>
                     <button title="Sair" onclick="logout()" class="hover:text-red-400 transition"><i class="fas fa-power-off"></i></button>
                 </div>
             </div>
 
             <div class="flex border-b border-slate-800 bg-slate-900 text-xs font-semibold text-slate-400">
-                <button onclick="switchTab('chats')" id="tab-btn-chats" class="tab-btn active flex-1 py-3 text-center flex items-center justify-center gap-2">
+                <button onclick="switchTab('chats')" id="tab-btn-chats" class="tab-btn active flex-1 py-3 text-center transition flex items-center justify-center gap-2">
                     <i class="fas fa-comments"></i> Conversas
                 </button>
-                <button onclick="switchTab('status')" id="tab-btn-status" class="tab-btn flex-1 py-3 text-center flex items-center justify-center gap-2">
+                <button onclick="switchTab('status')" id="tab-btn-status" class="tab-btn flex-1 py-3 text-center transition flex items-center justify-center gap-2">
                     <i class="fas fa-bolt"></i> Status
+                </button>
+                <button onclick="switchTab('calls')" id="tab-btn-calls" class="tab-btn flex-1 py-3 text-center transition flex items-center justify-center gap-2">
+                    <i class="fas fa-phone-alt"></i> Chamadas
                 </button>
             </div>
 
-            <div id="tab-content-chats" class="flex-grow overflow-y-auto bg-slate-900 divide-y divide-slate-800">
-                <div id="contacts-list"></div>
+            <div class="p-3 bg-slate-900 border-b border-slate-800">
+                <div class="relative">
+                    <i class="fas fa-search absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+                    <input type="text" id="search-input" onkeyup="filterContacts()" placeholder="Buscar no What Chat..." class="w-full pl-9 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500">
+                </div>
             </div>
 
-            <div id="tab-content-status" class="p-4 hidden text-slate-400 text-xs text-center">
-                <p>Nenhuma atualização recente.</p>
+            <div class="flex-grow overflow-y-auto bg-slate-900">
+
+                <div id="tab-content-chats" class="divide-y divide-slate-800">
+                    <div id="contacts-list"></div>
+                    <p id="contacts-empty" class="text-xs text-slate-500 text-center py-6 hidden">Nenhum contato ainda. Clique em <i class="fas fa-user-plus"></i> para adicionar.</p>
+                </div>
+
+                <div id="tab-content-status" class="p-4 hidden space-y-4">
+                    <div class="flex items-center gap-3 cursor-pointer p-3 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 transition">
+                        <div class="relative">
+                            <div class="w-12 h-12 bg-sky-500/20 text-orange-400 rounded-full flex items-center justify-center font-bold border border-orange-500">
+                                <i class="fas fa-plus"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm text-white">Meu Status</h4>
+                            <p class="text-xs text-slate-400">Compartilhe uma atualização no What Chat</p>
+                        </div>
+                    </div>
+                    <div class="text-[10px] font-bold text-orange-400 uppercase tracking-wider mt-4">Atualizações recentes</div>
+                    <p class="text-xs text-slate-500 text-center py-6">Nenhum status publicado hoje.</p>
+                </div>
+
+                <div id="tab-content-calls" class="p-4 hidden">
+                    <div class="text-[10px] font-bold text-sky-400 uppercase tracking-wider mb-2">Histórico Recente</div>
+                    <div class="text-center py-10 text-slate-500">
+                        <i class="fas fa-phone-slash text-3xl mb-2 text-slate-600"></i>
+                        <p class="text-xs">Nenhuma chamada registrada.</p>
+                    </div>
+                </div>
+
             </div>
         </div>
 
         <div class="hidden md:flex flex-col flex-grow bg-slate-950 relative">
 
-            <div id="welcome-view" class="flex flex-col items-center justify-center h-full text-center p-8">
-                <div class="w-28 h-28 bg-gradient-to-tr from-sky-500 to-orange-500 text-white rounded-3xl flex items-center justify-center text-5xl mb-6 shadow-neon">
+            <div id="welcome-view" class="flex flex-col items-center justify-center h-full text-center p-8 bg-slate-950">
+                <div class="w-28 h-28 bg-gradient-to-tr from-sky-500 to-orange-500 text-white rounded-3xl flex items-center justify-center text-5xl mb-6 shadow-neon transform hover:scale-105 transition">
                     <i class="fas fa-bolt"></i>
                 </div>
                 <h1 class="text-3xl font-extrabold bg-gradient-to-r from-sky-400 to-orange-500 bg-clip-text text-transparent mb-2">What Chat Web</h1>
-                <p class="text-xs text-slate-400 max-w-md">
-                    Selecione um contato ou adicione um novo número para começar a trocar mensagens em tempo real.
+                <p class="text-xs text-slate-400 max-w-md leading-relaxed mb-6">
+                    Mensagens em tempo real com visual moderno e de alta performance. Selecione um contato na lista ou adicione um novo usuário para conversar.
                 </p>
+                <div class="flex items-center gap-2 text-xs text-slate-500 border border-slate-800 bg-slate-900 px-4 py-2 rounded-full shadow-sm">
+                    <i class="fas fa-shield-alt text-orange-400"></i> Dados salvos na nuvem (Firestore)
+                </div>
             </div>
 
             <div id="active-chat-view" class="flex-col h-full hidden">
+
                 <div class="p-3.5 bg-slate-900 border-b border-slate-800 flex justify-between items-center">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold shadow-blue-glow">
@@ -129,19 +198,26 @@
                         </div>
                         <div>
                             <h3 id="active-contact-name" class="font-bold text-white text-sm">Contato</h3>
-                            <p id="active-contact-phone" class="text-[10px] text-orange-400">+55...</p>
+                            <p id="active-contact-username" class="text-[10px] text-orange-400">@usuario</p>
                         </div>
+                    </div>
+                    <div class="flex items-center gap-4 text-slate-400 text-base">
+                        <button title="Pesquisar" class="hover:text-orange-400 transition"><i class="fas fa-search"></i></button>
+                        <button title="Opções" class="hover:text-orange-400 transition"><i class="fas fa-ellipsis-v"></i></button>
                     </div>
                 </div>
 
                 <div id="messages-container" class="flex-grow p-6 overflow-y-auto space-y-3 bg-slate-950 flex flex-col"></div>
 
                 <form onsubmit="sendMessage(event)" class="p-3 bg-slate-900 border-t border-slate-800 flex items-center gap-3">
-                    <input type="text" id="message-input" placeholder="Digite sua mensagem..." class="flex-grow py-2.5 px-4 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500">
-                    <button type="submit" class="bg-neon-orange hover:bg-orange-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-neon transition">
+                    <button type="button" class="text-slate-400 text-xl hover:text-orange-400 transition"><i class="far fa-smile"></i></button>
+                    <button type="button" class="text-slate-400 text-xl hover:text-orange-400 transition"><i class="fas fa-paperclip"></i></button>
+                    <input type="text" id="message-input" placeholder="Digite sua mensagem no What Chat..." class="flex-grow py-2.5 px-4 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500">
+                    <button type="submit" id="send-btn" class="bg-neon-orange hover:bg-orange-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-neon transition">
                         <i class="fas fa-paper-plane text-sm"></i>
                     </button>
                 </form>
+
             </div>
 
         </div>
@@ -153,151 +229,259 @@
             <h3 class="text-lg font-bold text-white flex items-center gap-2">
                 <i class="fas fa-user-plus text-orange-400"></i> Novo Contato
             </h3>
-            <p class="text-xs text-slate-400">Digite o telefone exatamente como está no banco (ex: +5581986422797).</p>
+            <p class="text-xs text-slate-400">Insira o nome de usuário cadastrado no What Chat para iniciar a conversa.</p>
             <div>
-                <label class="block text-xs font-semibold text-slate-300 mb-1">Telefone</label>
-                <input type="tel" id="new-contact-phone" placeholder="+5581986422797" class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-orange-500">
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Usuário</label>
+                <input type="text" id="new-contact-username" placeholder="Ex: lucas.silva" class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-orange-500">
             </div>
             <div class="flex justify-end gap-2 pt-2">
                 <button onclick="toggleAddContactModal()" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-lg">Cancelar</button>
-                <button onclick="addContact()" class="px-4 py-2 text-xs font-bold bg-neon-orange text-white rounded-lg shadow-neon hover:bg-orange-600">Buscar e Adicionar</button>
+                <button onclick="addContact()" class="px-4 py-2 text-xs font-bold bg-neon-orange text-white rounded-lg shadow-neon hover:bg-orange-600">Adicionar</button>
             </div>
         </div>
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, addDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, arrayUnion, addDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // Cole aqui suas credenciais do Firebase Console
+        // >>> SUBSTITUA pelos dados do SEU projeto Firebase (Configurações do projeto > Seus apps) <<<
         const firebaseConfig = {
-            apiKey: "SUA_API_KEY_AQUI",
-            authDomain: "SEU_PROJETO.firebaseapp.com",
-            projectId: "SEU_PROJETO_ID",
-            storageBucket: "SEU_PROJETO.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:abcdef"
+            apiKey: "AIzaSyAyYH6zCoOZhrg30e076s3trA-0PYi7ARY",
+            authDomain: "chatray-95091.firebaseapp.com",
+            projectId: "chatray-95091",
+            storageBucket: "chatray-95091.firebasestorage.app",
+            messagingSenderId: "834696140367",
+            appId: "1:834696140367:web:0c31ca1bb2e28c6689fc3a"
         };
 
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let confirmationResult = null;
-        let currentUserData = null;
-        let activeContactPhone = null;
+        let currentUserData = null; // { username, name, contatos: [] }
+        let activeContactUsername = null;
         let unsubscribeMessages = null;
+        let contatosCache = []; // lista de { username, name }
 
-        window.onload = () => {
-            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { 'size': 'invisible' });
-        };
-
-        // Enviar SMS de autenticação
-        window.sendSMS = async () => {
-            const name = document.getElementById('user-name-input').value.trim();
-            const phone = document.getElementById('phone-input').value.trim();
-
-            if (!name || !phone) return alert("Preencha seu nome e telefone (+55...).");
-
-            try {
-                confirmationResult = await signInWithPhoneNumber(auth, phone, window.recaptchaVerifier);
-                sessionStorage.setItem('pending_name', name);
-                document.getElementById('phone-step').classList.add('hidden');
-                document.getElementById('code-step').classList.remove('hidden');
-            } catch (err) {
-                console.error(err);
-                alert("Erro ao enviar SMS: " + err.message);
-            }
-        };
-
-        // Validar código SMS e gravar exatamente como na coleção 'Users' da sua foto
-        window.verifySMSCode = async () => {
-            const code = document.getElementById('code-input').value.trim();
-            try {
-                const res = await confirmationResult.confirm(code);
-                const name = sessionStorage.getItem('pending_name') || "Usuário";
-
-                // Salva na coleção 'Users' exatamente com a estrutura id, name, phone
-                await setDoc(doc(db, "Users", res.user.phoneNumber), {
-                    id: res.user.phoneNumber,
-                    name: name,
-                    phone: res.user.phoneNumber
-                }, { merge: true });
-
-            } catch (err) {
-                console.error(err);
-                alert("Código SMS incorreto!");
-            }
-        };
-
-        // Escuta o login do usuário
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                // Busca na coleção 'Users'
-                const userDoc = await getDoc(doc(db, "Users", user.phoneNumber));
-                currentUserData = userDoc.exists() ? userDoc.data() : { phone: user.phoneNumber, name: "Usuário" };
-
-                document.getElementById('my-profile-name').textContent = currentUserData.name;
-                document.getElementById('my-profile-phone').textContent = currentUserData.phone;
-                document.getElementById('user-avatar-initial').textContent = currentUserData.name.charAt(0).toUpperCase();
-
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('chat-screen').classList.remove('hidden');
-            } else {
-                document.getElementById('auth-screen').classList.remove('hidden');
-                document.getElementById('chat-screen').classList.add('hidden');
-            }
-        });
-
-        // Adiciona contato buscando na coleção 'Users'
-        window.addContact = async () => {
-            const phone = document.getElementById('new-contact-phone').value.trim();
-            if (!phone || phone === currentUserData.phone) return alert("Insira um número válido e diferente do seu.");
-
-            const userDoc = await getDoc(doc(db, "Users", phone));
-            if (!userDoc.exists()) return alert("Telefone não encontrado no banco de dados!");
-
-            renderContactItem(userDoc.data());
-            window.toggleAddContactModal();
-        };
-
-        function renderContactItem(user) {
-            const list = document.getElementById('contacts-list');
-            const item = document.createElement('div');
-            item.className = "p-3 hover:bg-slate-800 cursor-pointer flex items-center gap-3 transition border-b border-slate-800/50";
-            item.onclick = () => selectContact(user);
-            item.innerHTML = `
-                <div class="w-11 h-11 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-blue-glow">
-                    ${user.name.charAt(0).toUpperCase()}
-                </div>
-                <div class="flex-grow">
-                    <h4 class="font-semibold text-white text-sm">${user.name}</h4>
-                    <p class="text-xs text-orange-400 truncate">${user.phone}</p>
-                </div>
-            `;
-            list.appendChild(item);
+        function normalizarUsuario(u) {
+            return (u || '').trim().toLowerCase().replace(/\s+/g, '');
         }
 
-        // Seleciona a conversa
+        // ---------- Alternância Login / Cadastro ----------
+        window.mostrarCadastro = () => {
+            document.getElementById('login-step').classList.add('hidden');
+            document.getElementById('cadastro-step').classList.remove('hidden');
+        };
+        window.mostrarLogin = () => {
+            document.getElementById('cadastro-step').classList.add('hidden');
+            document.getElementById('login-step').classList.remove('hidden');
+        };
+
+        // ---------- Criar Conta ----------
+        window.criarConta = async () => {
+            const nome = document.getElementById('cadastro-nome-input').value.trim();
+            const usernameRaw = document.getElementById('cadastro-username-input').value.trim();
+            const senha = document.getElementById('cadastro-senha-input').value;
+            const username = normalizarUsuario(usernameRaw);
+
+            if (!nome || !username || !senha) return alert("Preencha nome, usuário e senha.");
+
+            const btn = document.getElementById('cadastro-btn');
+            btn.disabled = true; btn.textContent = 'Criando...';
+
+            try {
+                const ref = doc(db, "chatUsers", username);
+                const existente = await getDoc(ref);
+                if (existente.exists()) {
+                    alert("Esse nome de usuário já está em uso. Escolha outro.");
+                    btn.disabled = false; btn.textContent = 'Criar Conta no What Chat';
+                    return;
+                }
+
+                await setDoc(ref, { username, name: nome, password: senha, contatos: [] });
+                entrarComoUsuario({ username, name: nome, contatos: [] });
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao criar conta. Verifique sua conexão e a configuração do Firebase.");
+                btn.disabled = false; btn.textContent = 'Criar Conta no What Chat';
+            }
+        };
+
+        // ---------- Login ----------
+        window.fazerLogin = async () => {
+            const usernameRaw = document.getElementById('login-username-input').value.trim();
+            const senha = document.getElementById('login-password-input').value;
+            const username = normalizarUsuario(usernameRaw);
+
+            if (!username || !senha) return alert("Preencha usuário e senha.");
+
+            const btn = document.getElementById('login-btn');
+            btn.disabled = true; btn.textContent = 'Entrando...';
+
+            try {
+                const ref = doc(db, "chatUsers", username);
+                const snap = await getDoc(ref);
+
+                if (!snap.exists() || snap.data().password !== senha) {
+                    alert("Usuário ou senha incorretos.");
+                    btn.disabled = false; btn.innerHTML = '<span>Entrar</span> <i class="fas fa-arrow-right text-xs"></i>';
+                    return;
+                }
+
+                entrarComoUsuario(snap.data());
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao entrar. Verifique sua conexão e a configuração do Firebase.");
+                btn.disabled = false; btn.innerHTML = '<span>Entrar</span> <i class="fas fa-arrow-right text-xs"></i>';
+            }
+        };
+
+        function entrarComoUsuario(userData) {
+            currentUserData = userData;
+            localStorage.setItem('whatchat_username', userData.username);
+
+            document.getElementById('my-profile-name').textContent = userData.name;
+            document.getElementById('my-profile-username').textContent = '@' + userData.username;
+            document.getElementById('user-avatar-initial').textContent = userData.name.charAt(0).toUpperCase();
+
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('chat-screen').classList.remove('hidden');
+
+            carregarContatos();
+        }
+
+        // ---------- Sessão salva (permanece logado no mesmo navegador) ----------
+        window.onload = async () => {
+            const savedUsername = localStorage.getItem('whatchat_username');
+            if (savedUsername) {
+                try {
+                    const snap = await getDoc(doc(db, "chatUsers", savedUsername));
+                    if (snap.exists()) {
+                        entrarComoUsuario(snap.data());
+                    } else {
+                        localStorage.removeItem('whatchat_username');
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+            document.getElementById('loading-screen').classList.add('hidden');
+            document.getElementById('auth-screen').classList.remove('hidden');
+        };
+
+        // ---------- Abas (Conversas, Status, Chamadas) ----------
+        window.switchTab = (tabName) => {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`tab-btn-${tabName}`).classList.add('active');
+
+            document.getElementById('tab-content-chats').classList.add('hidden');
+            document.getElementById('tab-content-status').classList.add('hidden');
+            document.getElementById('tab-content-calls').classList.add('hidden');
+
+            document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
+        };
+
+        // ---------- Modal de Contatos ----------
+        window.toggleAddContactModal = () => {
+            document.getElementById('add-contact-modal').classList.toggle('hidden');
+        };
+
+        // ---------- Adicionar Contato pelo Usuário ----------
+        window.addContact = async () => {
+            const usernameRaw = document.getElementById('new-contact-username').value.trim();
+            const username = normalizarUsuario(usernameRaw);
+
+            if (!username || username === currentUserData.username) return alert("Insira um nome de usuário válido (diferente do seu).");
+
+            try {
+                const snap = await getDoc(doc(db, "chatUsers", username));
+                if (!snap.exists()) return alert("Esse usuário ainda não está cadastrado no What Chat.");
+
+                if (contatosCache.find(c => c.username === username)) {
+                    toggleAddContactModal();
+                    return;
+                }
+
+                const contatoInfo = { username: snap.data().username, name: snap.data().name };
+                await updateDoc(doc(db, "chatUsers", currentUserData.username), { contatos: arrayUnion(contatoInfo) });
+
+                contatosCache.push(contatoInfo);
+                renderContactsList();
+                toggleAddContactModal();
+                document.getElementById('new-contact-username').value = '';
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao adicionar contato.");
+            }
+        };
+
+        async function carregarContatos() {
+            try {
+                const snap = await getDoc(doc(db, "chatUsers", currentUserData.username));
+                contatosCache = (snap.exists() && Array.isArray(snap.data().contatos)) ? snap.data().contatos : [];
+                renderContactsList();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderContactsList(filtro = '') {
+            const list = document.getElementById('contacts-list');
+            const vazio = document.getElementById('contacts-empty');
+            list.innerHTML = '';
+
+            const filtrados = contatosCache.filter(c => c.name.toLowerCase().includes(filtro.toLowerCase()) || c.username.toLowerCase().includes(filtro.toLowerCase()));
+
+            if (filtrados.length === 0) {
+                vazio.classList.remove('hidden');
+                return;
+            }
+            vazio.classList.add('hidden');
+
+            filtrados.forEach(user => {
+                const item = document.createElement('div');
+                item.className = "p-3 hover:bg-slate-800 cursor-pointer flex items-center gap-3 transition border-b border-slate-800/50";
+                item.onclick = () => selectContact(user);
+                item.innerHTML = `
+                    <div class="w-11 h-11 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-blue-glow">
+                        ${user.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex justify-between items-center">
+                            <h4 class="font-semibold text-white text-sm">${user.name}</h4>
+                            <span class="text-[9px] text-orange-400 font-bold uppercase">@${user.username}</span>
+                        </div>
+                        <p class="text-xs text-slate-400 truncate">Toque para conversar</p>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        window.filterContacts = () => {
+            const termo = document.getElementById('search-input').value;
+            renderContactsList(termo);
+        };
+
+        // ---------- Selecionar Contato Ativo ----------
         function selectContact(user) {
-            activeContactPhone = user.phone;
+            activeContactUsername = user.username;
             document.getElementById('welcome-view').classList.add('hidden');
             document.getElementById('active-chat-view').classList.remove('hidden');
             document.getElementById('active-chat-view').classList.add('flex');
 
             document.getElementById('active-contact-name').textContent = user.name;
-            document.getElementById('active-contact-phone').textContent = user.phone;
+            document.getElementById('active-contact-username').textContent = '@' + user.username;
             document.getElementById('active-contact-avatar').textContent = user.name.charAt(0).toUpperCase();
 
             listenToMessages();
         }
 
-        // Carrega as mensagens do Firestore
+        // ---------- Mensagens em Tempo Real ----------
         function listenToMessages() {
             if (unsubscribeMessages) unsubscribeMessages();
 
-            const chatId = [currentUserData.phone, activeContactPhone].sort().join('_');
+            const chatId = [currentUserData.username, activeContactUsername].sort().join('_');
             const q = query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "asc"));
 
             const container = document.getElementById('messages-container');
@@ -305,21 +489,19 @@
 
             unsubscribeMessages = onSnapshot(q, (snapshot) => {
                 container.innerHTML = '';
-                snapshot.forEach((doc) => {
-                    const msg = doc.data();
-                    const isSent = msg.sender === currentUserData.phone;
+                snapshot.forEach((docSnap) => {
+                    const msg = docSnap.data();
+                    const isSent = msg.sender === currentUserData.username;
 
                     const bubble = document.createElement('div');
                     bubble.className = `max-w-[65%] p-3 rounded-2xl text-xs ${
-                        isSent 
-                            ? 'bg-sky-600 text-white self-end rounded-tr-none shadow-blue-glow' 
+                        isSent
+                            ? 'bg-sky-600 text-white self-end rounded-tr-none shadow-blue-glow'
                             : 'bg-slate-800 text-slate-100 border border-slate-700 self-start rounded-tl-none'
                     }`;
                     bubble.innerHTML = `
                         <div>${msg.text}</div>
-                        <div class="text-[9px] ${isSent ? 'text-sky-200' : 'text-slate-400'} text-right mt-1">
-                            ${msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '...'}
-                        </div>
+                        <div class="text-[9px] ${isSent ? 'text-sky-200' : 'text-slate-400'} text-right mt-1">Agora</div>
                     `;
                     container.appendChild(bubble);
                 });
@@ -327,39 +509,24 @@
             });
         }
 
-        // Enviar mensagem
         window.sendMessage = async (e) => {
             e.preventDefault();
             const input = document.getElementById('message-input');
             const text = input.value.trim();
-            if (!text || !activeContactPhone) return;
+            if (!text || !activeContactUsername) return;
 
-            const chatId = [currentUserData.phone, activeContactPhone].sort().join('_');
+            const chatId = [currentUserData.username, activeContactUsername].sort().join('_');
             await addDoc(collection(db, "chats", chatId, "messages"), {
                 text: text,
-                sender: currentUserData.phone,
+                sender: currentUserData.username,
                 timestamp: new Date()
             });
 
             input.value = '';
         };
 
-        window.toggleAddContactModal = () => {
-            document.getElementById('add-contact-modal').classList.toggle('hidden');
-        };
-
-        window.switchTab = (tabName) => {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`tab-btn-${tabName}`).classList.add('active');
-
-            document.getElementById('tab-content-chats').classList.add('hidden');
-            document.getElementById('tab-content-status').classList.add('hidden');
-
-            document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
-        };
-
         window.logout = () => {
-            signOut(auth);
+            localStorage.removeItem('whatchat_username');
             location.reload();
         };
     </script>
