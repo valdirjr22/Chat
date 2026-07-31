@@ -1,4 +1,4 @@
-<html lang="pt-BR" class="w-full h-full m-0 p-0 overflow-hidden">
+<html lang="pt-BR" class="w-full h-full m-0 p-0">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -9,12 +9,12 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         html, body {
-            width: 100vw !important;
-            height: 100vh !important;
-            height: 100dvh !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            overflow: hidden !important;
+            width: 100vw;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            overflow-y: auto; /* Permite rolagem vertical na página inteira */
             font-family: 'Inter', sans-serif;
         }
 
@@ -73,7 +73,7 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body id="app-body" class="bg-slate-100 w-screen h-screen m-0 p-0 flex items-center justify-center overflow-hidden">
+<body id="app-body" class="bg-slate-100 w-full min-h-screen m-0 p-0 flex items-center justify-center">
 
     <div id="loading-screen" class="fixed inset-0 bg-white flex items-center justify-center z-[100]">
         <div class="text-slate-600 text-sm flex items-center gap-2">
@@ -81,7 +81,7 @@
         </div>
     </div>
 
-    <div id="auth-screen" class="bg-white border border-slate-200 rounded-2xl shadow-xl w-full max-w-md p-8 z-50 text-slate-800">
+    <div id="auth-screen" class="bg-white border border-slate-200 rounded-2xl shadow-xl w-full max-w-md p-8 z-50 text-slate-800 my-auto">
         <div class="text-center mb-6">
             <div class="w-16 h-16 bg-gradient-to-tr from-sky-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-neon transform rotate-3">
                 <i class="fas fa-bolt text-white text-3xl"></i>
@@ -151,7 +151,7 @@
         </div>
     </div>
 
-    <div id="chat-screen" class="bg-white w-full h-full flex overflow-hidden hidden">
+    <div id="chat-screen" class="bg-white w-full h-[90vh] max-w-6xl mx-auto rounded-2xl shadow-xl flex overflow-hidden hidden my-auto border border-slate-200">
 
         <div class="w-80 md:w-[350px] lg:w-[380px] bg-white border-r border-slate-200 flex flex-col h-full flex-shrink-0">
             <div class="bg-slate-50 p-3.5 flex justify-between items-center border-b border-slate-200">
@@ -264,14 +264,11 @@
                     <button type="button" title="Tirar Foto ou Gravar Vídeo" onclick="document.getElementById('media-camera-input').click()" class="text-slate-500 hover:text-orange-500 p-2 transition text-base">
                         <i class="fas fa-camera"></i>
                     </button>
-                    <button type="button" id="voice-record-btn" title="Gravar Mensagem de Voz" onclick="toggleGravarAudio()" class="text-slate-500 hover:text-red-500 p-2 transition text-base">
-                        <i id="voice-icon" class="fas fa-microphone"></i>
-                    </button>
 
                     <input type="text" id="message-input" placeholder="Digite sua mensagem..." class="flex-grow py-2.5 px-4 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-orange-500">
                     
                     <button type="submit" id="send-btn" class="bg-neon-orange hover:bg-orange-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-neon transition flex-shrink-0">
-                        <i class="fas fa-paper-plane text-sm"></i>
+                        <i class="fas fa-paperplane text-sm"></i>
                     </button>
                 </form>
             </div>
@@ -386,11 +383,6 @@
         let localStream = null;
         let activeCallSignalData = null;
         let isVideoCall = true;
-
-        // Variáveis para gravação de áudio
-        let mediaRecorder = null;
-        let audioChunks = [];
-        let isRecording = false;
 
         function normalizarUsuario(u) {
             return (u || '').trim().toLowerCase().replace(/\s+/g, '');
@@ -589,7 +581,6 @@
                     text: '',
                     image: isImage ? base64Data : null,
                     video: isVideo ? base64Data : null,
-                    audio: null,
                     fileName: fileName,
                     sender: currentUserData.username,
                     timestamp: new Date()
@@ -599,70 +590,6 @@
             } catch (err) {
                 console.error(err);
                 alert("Erro ao processar o arquivo de mídia.");
-            }
-        };
-
-        // Função para alternar gravação de mensagem de voz
-        window.toggleGravarAudio = async () => {
-            if (!activeContactUsername) return;
-            const icon = document.getElementById('voice-icon');
-            const btn = document.getElementById('voice-record-btn');
-
-            if (!isRecording) {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream);
-                    audioChunks = [];
-
-                    mediaRecorder.ondataavailable = (event) => {
-                        if (event.data.size > 0) {
-                            audioChunks.push(event.data);
-                        }
-                    };
-
-                    mediaRecorder.onstop = async () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                        const reader = new FileReader();
-                        reader.readAsDataURL(audioBlob);
-                        reader.onloadend = async () => {
-                            const base64Audio = reader.result;
-                            const chatId = [currentUserData.username, activeContactUsername].sort().join('_');
-
-                            try {
-                                await addDoc(collection(db, "chats", chatId, "messages"), {
-                                    text: '',
-                                    image: null,
-                                    video: null,
-                                    audio: base64Audio,
-                                    fileName: 'audio_voz.webm',
-                                    sender: currentUserData.username,
-                                    timestamp: new Date()
-                                });
-                            } catch (err) {
-                                console.error(err);
-                                alert("Erro ao enviar mensagem de voz.");
-                            }
-                        };
-
-                        // Parar as faixas do microfone
-                        stream.getTracks().forEach(track => track.stop());
-                    };
-
-                    mediaRecorder.start();
-                    isRecording = true;
-                    icon.classList.remove('fa-microphone');
-                    icon.classList.add('fa-stop', 'text-red-500', 'animate-pulse');
-                    btn.title = "Parar e Enviar Áudio";
-                } catch (err) {
-                    console.error(err);
-                    alert("Não foi possível acessar o microfone.");
-                }
-            } else {
-                mediaRecorder.stop();
-                isRecording = false;
-                icon.classList.remove('fa-stop', 'text-red-500', 'animate-pulse');
-                icon.classList.add('fa-microphone');
-                btn.title = "Gravar Mensagem de Voz";
             }
         };
 
@@ -685,7 +612,7 @@
 
             if ("Notification" in window && Notification.permission === "granted") {
                 new Notification(`Nova mensagem de ${activeContactName}`, {
-                    body: textoMensagem || "Enviou uma mídia ou áudio",
+                    body: textoMensagem || "Enviou uma mídia",
                     icon: "https://cdn-icons-png.flaticon.com/512/732/732200.png"
                 });
             }
@@ -1000,13 +927,6 @@
                             </div>
                         `;
                     }
-                    if (msg.audio) {
-                        contentHTML += `
-                            <div class="my-1">
-                                <audio src="${msg.audio}" controls class="w-full max-w-[240px] h-10"></audio>
-                            </div>
-                        `;
-                    }
 
                     contentHTML += `
                         <button onclick="apagarMensagem('${msgId}')" title="Apagar Mensagem" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition ${isSent ? 'text-sky-200 hover:text-white' : 'text-slate-400 hover:text-red-500'}">
@@ -1045,7 +965,6 @@
                 text: text,
                 image: null,
                 video: null,
-                audio: null,
                 sender: currentUserData.username,
                 timestamp: new Date()
             });
