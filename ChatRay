@@ -387,7 +387,6 @@
         let activeCallSignalData = null;
         let isVideoCall = true;
 
-        // Variáveis para gravação de áudio
         let mediaRecorder = null;
         let audioChunks = [];
         let isRecording = false;
@@ -602,7 +601,6 @@
             }
         };
 
-        // Função para gravar e enviar mensagem de voz
         window.toggleGravarAudio = async () => {
             if (!activeContactUsername) return;
             const icon = document.getElementById('voice-icon');
