@@ -1,4 +1,4 @@
-<html lang="pt-BR">
+<html lang="pt-BR" class="w-full h-full m-0 p-0 overflow-hidden">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +8,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        html, body {
+            width: 100vw !important;
+            height: 100vh !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            font-family: 'Inter', sans-serif;
+        }
 
         .bg-neon-orange { background-color: #ff6b00; }
         .bg-neon-orange:hover { background-color: #e05e00; }
@@ -45,7 +52,7 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body id="app-body" class="bg-slate-100 h-screen w-screen flex items-center justify-center p-0 md:p-4 overflow-hidden">
+<body id="app-body" class="bg-slate-100 w-screen h-screen m-0 p-0 flex items-center justify-center overflow-hidden">
 
     <div id="loading-screen" class="fixed inset-0 bg-white flex items-center justify-center z-[100]">
         <div class="text-slate-600 text-sm flex items-center gap-2">
@@ -123,9 +130,9 @@
         </div>
     </div>
 
-    <div id="chat-screen" class="bg-white w-full h-full max-w-[1600px] max-h-[920px] rounded-none md:rounded-2xl shadow-xl flex overflow-hidden border border-slate-200 hidden">
+    <div id="chat-screen" class="bg-white w-full h-full flex overflow-hidden hidden">
 
-        <div class="w-full md:w-[380px] lg:w-[420px] bg-white border-r border-slate-200 flex flex-col h-full flex-shrink-0">
+        <div class="w-80 md:w-[350px] lg:w-[380px] bg-white border-r border-slate-200 flex flex-col h-full flex-shrink-0">
             <div class="bg-slate-50 p-3.5 flex justify-between items-center border-b border-slate-200">
                 <div class="flex items-center gap-3 cursor-pointer" onclick="toggleEditProfileModal()">
                     <div id="my-profile-avatar-box" class="w-10 h-10 bg-gradient-to-tr from-sky-500 to-orange-500 rounded-xl flex items-center justify-center text-white font-bold shadow-neon overflow-hidden">
@@ -133,7 +140,7 @@
                     </div>
                     <div>
                         <h3 id="my-profile-name" class="font-bold text-slate-800 text-sm leading-tight">Meu Nome</h3>
-                        <p id="my-profile-status" class="text-[11px] text-slate-500 truncate max-w-[160px]">Disponível</p>
+                        <p id="my-profile-status" class="text-[11px] text-slate-500 truncate max-w-[140px]">Disponível</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-3 text-slate-600 text-lg">
@@ -190,9 +197,9 @@
             </div>
         </div>
 
-        <div class="flex flex-col flex-grow bg-slate-50 relative">
+        <div class="flex flex-col flex-1 bg-slate-50 relative h-full min-w-0 w-full">
 
-            <div id="welcome-view" class="flex flex-col items-center justify-center h-full text-center p-8 bg-slate-50">
+            <div id="welcome-view" class="flex flex-col items-center justify-center h-full text-center p-8 bg-slate-50 w-full">
                 <div class="w-28 h-28 bg-gradient-to-tr from-sky-500 to-orange-500 text-white rounded-3xl flex items-center justify-center text-5xl mb-6 shadow-neon">
                     <i class="fas fa-bolt"></i>
                 </div>
@@ -202,8 +209,8 @@
                 </p>
             </div>
 
-            <div id="active-chat-view" class="flex-col h-full hidden">
-                <div class="p-3.5 bg-white border-b border-slate-200 flex justify-between items-center">
+            <div id="active-chat-view" class="flex-col h-full hidden w-full">
+                <div class="p-3.5 bg-white border-b border-slate-200 flex justify-between items-center w-full">
                     <div class="flex items-center gap-3">
                         <div id="active-contact-avatar-box" class="w-10 h-10 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold shadow-blue-glow overflow-hidden">
                             <span id="active-contact-avatar">C</span>
@@ -224,9 +231,9 @@
                     </div>
                 </div>
 
-                <div id="messages-container" class="flex-grow p-6 overflow-y-auto space-y-3 bg-slate-50 flex flex-col"></div>
+                <div id="messages-container" class="flex-grow p-6 overflow-y-auto space-y-3 bg-slate-50 flex flex-col w-full"></div>
 
-                <form onsubmit="sendMessage(event)" class="p-3 bg-white border-t border-slate-200 flex items-center gap-2">
+                <form onsubmit="sendMessage(event)" class="p-3 bg-white border-t border-slate-200 flex items-center gap-2 w-full">
                     <input type="file" id="media-file-input" accept="image/*,video/*" class="hidden" onchange="enviarArquivoMidia(event)">
                     <input type="file" id="media-camera-input" accept="image/*,video/*" capture="environment" class="hidden" onchange="enviarArquivoMidia(event)">
 
@@ -350,7 +357,6 @@
         let contatosCache = [];
         let isFirstLoad = true;
 
-        // Variáveis de Chamada
         let myPeer = null;
         let currentCall = null;
         let localStream = null;
@@ -364,7 +370,6 @@
         function inicializarPeerJS() {
             if (!currentUserData || myPeer) return;
 
-            // Configuração do PeerJS com Servidores STUN Públicos do Google
             myPeer = new Peer(`whatchat_${currentUserData.username}`, {
                 config: {
                     iceServers: [
@@ -422,7 +427,6 @@
                 document.getElementById('call-contact-name').textContent = activeContactName;
                 document.getElementById('active-call-modal').classList.remove('hidden');
 
-                // Envia sinal para o Firebase para avisar o outro usuário
                 await setDoc(doc(db, "calls", activeContactUsername), {
                     from: currentUserData.username,
                     fromName: currentUserData.name,
@@ -465,7 +469,6 @@
                 document.getElementById('call-contact-name').textContent = activeCallSignalData.fromName;
                 document.getElementById('active-call-modal').classList.remove('hidden');
 
-                // Atualiza o estado da chamada no Firebase
                 await updateDoc(doc(db, "calls", currentUserData.username), {
                     status: 'accepted'
                 });
