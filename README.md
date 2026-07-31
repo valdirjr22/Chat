@@ -25,13 +25,26 @@
 
         .hidden { display: none !important; }
 
+        @keyframes vibrate-screen {
+            0% { transform: translate(0, 0); }
+            20% { transform: translate(-3px, 3px); }
+            40% { transform: translate(-3px, -3px); }
+            60% { transform: translate(3px, 3px); }
+            80% { transform: translate(3px, -3px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        .vibrate-effect {
+            animation: vibrate-screen 0.2s ease-in-out 2;
+        }
+
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #0284c7; }
     </style>
 </head>
-<body class="bg-slate-900 h-screen w-screen flex items-center justify-center p-0 md:p-4 overflow-hidden">
+<body id="app-body" class="bg-slate-900 h-screen w-screen flex items-center justify-center p-0 md:p-4 overflow-hidden">
 
     <div id="loading-screen" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-[100]">
         <div class="text-slate-400 text-sm flex items-center gap-2">
@@ -85,6 +98,17 @@
                 </div>
             </div>
             <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Foto de Perfil (Arquivo do Dispositivo)</label>
+                <input type="file" id="cadastro-avatar-file" accept="image/*" class="w-full text-xs text-slate-400 bg-slate-900 border border-slate-700 rounded-lg p-2 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-orange-500 file:text-white hover:file:bg-orange-600 cursor-pointer">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Mensagem de Perfil (Opcional)</label>
+                <div class="relative">
+                    <i class="fas fa-quote-left absolute left-3 top-3.5 text-slate-400 text-sm"></i>
+                    <input type="text" id="cadastro-status-input" placeholder="Ex: Disponível no What Chat!" class="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-orange-500">
+                </div>
+            </div>
+            <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-1">Crie uma Senha</label>
                 <div class="relative">
                     <i class="fas fa-lock absolute left-3 top-3.5 text-slate-400 text-sm"></i>
@@ -102,16 +126,18 @@
 
         <div class="w-full md:w-[380px] lg:w-[420px] bg-slate-900 border-r border-slate-800 flex flex-col h-full flex-shrink-0">
             <div class="bg-slate-800 p-3.5 flex justify-between items-center border-b border-slate-700">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-gradient-to-tr from-sky-500 to-orange-500 rounded-xl flex items-center justify-center text-white font-bold shadow-neon">
+                <div class="flex items-center gap-3 cursor-pointer" onclick="toggleEditProfileModal()">
+                    <div id="my-profile-avatar-box" class="w-10 h-10 bg-gradient-to-tr from-sky-500 to-orange-500 rounded-xl flex items-center justify-center text-white font-bold shadow-neon overflow-hidden">
                         <span id="user-avatar-initial">W</span>
                     </div>
                     <div>
                         <h3 id="my-profile-name" class="font-bold text-white text-sm leading-tight">Meu Nome</h3>
-                        <p id="my-profile-username" class="text-[11px] text-sky-400">@usuario</p>
+                        <p id="my-profile-status" class="text-[11px] text-slate-400 truncate max-w-[160px]">Disponível</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-3 text-slate-300 text-lg">
+                    <button title="Editar Perfil" onclick="toggleEditProfileModal()" class="hover:text-sky-400 transition"><i class="fas fa-pen"></i></button>
+                    <button title="Ativar Notificações" onclick="pedirPermissaoNotificacao()" class="hover:text-yellow-400 transition"><i class="fas fa-bell"></i></button>
                     <button title="Novo Contato" onclick="toggleAddContactModal()" class="hover:text-orange-400 transition"><i class="fas fa-user-plus"></i></button>
                     <button title="Sair" onclick="logout()" class="hover:text-red-400 transition"><i class="fas fa-power-off"></i></button>
                 </div>
@@ -143,13 +169,13 @@
                 </div>
 
                 <div id="tab-content-status" class="p-4 hidden space-y-4">
-                    <div class="flex items-center gap-3 cursor-pointer p-3 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 transition">
+                    <div class="flex items-center gap-3 cursor-pointer p-3 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 transition" onclick="toggleEditProfileModal()">
                         <div class="w-12 h-12 bg-sky-500/20 text-orange-400 rounded-full flex items-center justify-center font-bold border border-orange-500">
                             <i class="fas fa-plus"></i>
                         </div>
                         <div>
-                            <h4 class="font-bold text-sm text-white">Meu Status</h4>
-                            <p class="text-xs text-slate-400">Compartilhe uma atualização no What Chat</p>
+                            <h4 class="font-bold text-sm text-white">Atualizar Perfil & Recado</h4>
+                            <p class="text-xs text-slate-400">Edite seu status ou foto no What Chat</p>
                         </div>
                     </div>
                 </div>
@@ -178,21 +204,42 @@
             <div id="active-chat-view" class="flex-col h-full hidden">
                 <div class="p-3.5 bg-slate-900 border-b border-slate-800 flex justify-between items-center">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold shadow-blue-glow">
+                        <div id="active-contact-avatar-box" class="w-10 h-10 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold shadow-blue-glow overflow-hidden">
                             <span id="active-contact-avatar">C</span>
                         </div>
                         <div>
                             <h3 id="active-contact-name" class="font-bold text-white text-sm">Contato</h3>
-                            <p id="active-contact-username" class="text-[10px] text-orange-400">@usuario</p>
+                            <p id="active-contact-status" class="text-[10px] text-orange-400 truncate max-w-[200px]">@usuario</p>
                         </div>
+                    </div>
+
+                    <div class="flex items-center gap-4 text-slate-300 text-lg pr-2">
+                        <button title="Chamada de Voz" onclick="iniciarChamadaVoz()" class="hover:text-sky-400 transition p-1">
+                            <i class="fas fa-phone"></i>
+                        </button>
+                        <button title="Chamada de Vídeo" onclick="iniciarChamadaVideo()" class="hover:text-orange-400 transition p-1">
+                            <i class="fas fa-video"></i>
+                        </button>
                     </div>
                 </div>
 
                 <div id="messages-container" class="flex-grow p-6 overflow-y-auto space-y-3 bg-slate-950 flex flex-col"></div>
 
-                <form onsubmit="sendMessage(event)" class="p-3 bg-slate-900 border-t border-slate-800 flex items-center gap-3">
+                <form onsubmit="sendMessage(event)" class="p-3 bg-slate-900 border-t border-slate-800 flex items-center gap-2">
+                    
+                    <input type="file" id="media-file-input" accept="image/*,video/*" class="hidden" onchange="enviarArquivoMidia(event)">
+                    <input type="file" id="media-camera-input" accept="image/*,video/*" capture="environment" class="hidden" onchange="enviarArquivoMidia(event)">
+
+                    <button type="button" title="Anexar Foto/Vídeo do Equipamento" onclick="document.getElementById('media-file-input').click()" class="text-slate-400 hover:text-sky-400 p-2 transition text-base">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+                    <button type="button" title="Tirar Foto ou Gravar Vídeo" onclick="document.getElementById('media-camera-input').click()" class="text-slate-400 hover:text-orange-400 p-2 transition text-base">
+                        <i class="fas fa-camera"></i>
+                    </button>
+
                     <input type="text" id="message-input" placeholder="Digite sua mensagem..." class="flex-grow py-2.5 px-4 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500">
-                    <button type="submit" id="send-btn" class="bg-neon-orange hover:bg-orange-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-neon transition">
+                    
+                    <button type="submit" id="send-btn" class="bg-neon-orange hover:bg-orange-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-neon transition flex-shrink-0">
                         <i class="fas fa-paper-plane text-sm"></i>
                     </button>
                 </form>
@@ -200,6 +247,30 @@
 
         </div>
 
+    </div>
+
+    <div id="edit-profile-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl shadow-neon w-full max-w-sm p-6 space-y-4 text-white">
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <i class="fas fa-user-edit text-orange-400"></i> Editar Meu Perfil
+            </h3>
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Nome</label>
+                <input type="text" id="edit-name-input" class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-orange-500">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Escolher Nova Foto do Equipamento</label>
+                <input type="file" id="edit-avatar-file" accept="image/*" class="w-full text-xs text-slate-400 bg-slate-900 border border-slate-700 rounded-xl p-2 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-orange-500 file:text-white hover:file:bg-orange-600 cursor-pointer">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Recado / Mensagem de Perfil</label>
+                <input type="text" id="edit-status-input" placeholder="Ex: Disponível no What Chat!" class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-orange-500">
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="toggleEditProfileModal()" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-lg">Cancelar</button>
+                <button onclick="salvarPerfil()" class="px-4 py-2 text-xs font-bold bg-neon-orange text-white rounded-lg shadow-neon hover:bg-orange-600">Salvar</button>
+            </div>
+        </div>
     </div>
 
     <div id="add-contact-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
@@ -236,11 +307,85 @@
 
         let currentUserData = null;
         let activeContactUsername = null;
+        let activeContactName = "Contato";
         let unsubscribeMessages = null;
         let contatosCache = [];
+        let isFirstLoad = true;
 
         function normalizarUsuario(u) {
             return (u || '').trim().toLowerCase().replace(/\s+/g, '');
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        window.enviarArquivoMidia = async (e) => {
+            const file = e.target.files[0];
+            if (!file || !activeContactUsername) return;
+
+            try {
+                const base64Data = await fileToBase64(file);
+                const isVideo = file.type.startsWith('video/');
+                const isImage = file.type.startsWith('image/');
+
+                const chatId = [currentUserData.username, activeContactUsername].sort().join('_');
+                
+                await addDoc(collection(db, "chats", chatId, "messages"), {
+                    text: '',
+                    image: isImage ? base64Data : null,
+                    video: isVideo ? base64Data : null,
+                    sender: currentUserData.username,
+                    timestamp: new Date()
+                });
+
+                e.target.value = ''; // reseta o campo
+            } catch (err) {
+                console.error(err);
+                alert("Erro ao processar o arquivo de mídia.");
+            }
+        };
+
+        window.iniciarChamadaVoz = () => {
+            if (activeContactName) {
+                alert(`Iniciando chamada de voz com ${activeContactName}...`);
+            }
+        };
+
+        window.iniciarChamadaVideo = () => {
+            if (activeContactName) {
+                alert(`Iniciando chamada de vídeo com ${activeContactName}...`);
+            }
+        };
+
+        window.pedirPermissaoNotificacao = () => {
+            if ("Notification" in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") alert("Notificações ativadas com sucesso!");
+                });
+            } else {
+                alert("Seu navegador não suporta notificações.");
+            }
+        };
+
+        function dispararNotificacaoEVibracao(textoMensagem) {
+            if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
+            
+            const body = document.getElementById('app-body');
+            body.classList.add('vibrate-effect');
+            setTimeout(() => body.classList.remove('vibrate-effect'), 500);
+
+            if ("Notification" in window && Notification.permission === "granted") {
+                new Notification(`Nova mensagem de ${activeContactName}`, {
+                    body: textoMensagem || "Enviou uma mídia",
+                    icon: "https://cdn-icons-png.flaticon.com/512/732/732200.png"
+                });
+            }
         }
 
         window.mostrarCadastro = () => {
@@ -256,17 +401,25 @@
         window.criarConta = async () => {
             const nome = document.getElementById('cadastro-nome-input').value.trim();
             const username = normalizarUsuario(document.getElementById('cadastro-username-input').value);
+            const avatarFile = document.getElementById('cadastro-avatar-file').files[0];
+            const statusMsg = document.getElementById('cadastro-status-input').value.trim() || "Disponível no What Chat!";
             const senha = document.getElementById('cadastro-senha-input').value;
 
-            if (!nome || !username || !senha) return alert("Preencha todos os campos.");
+            if (!nome || !username || !senha) return alert("Preencha nome, usuário e senha.");
 
             try {
                 const ref = doc(db, "chatUsers", username);
                 const existente = await getDoc(ref);
                 if (existente.exists()) return alert("Esse usuário já existe.");
 
-                await setDoc(ref, { username, name: nome, password: senha, contatos: [] });
-                entrarComoUsuario({ username, name: nome, contatos: [] });
+                let avatarBase64 = '';
+                if (avatarFile) {
+                    avatarBase64 = await fileToBase64(avatarFile);
+                }
+
+                const newUser = { username, name: nome, avatar: avatarBase64, status: statusMsg, password: senha, contatos: [] };
+                await setDoc(ref, newUser);
+                entrarComoUsuario(newUser);
             } catch (e) {
                 console.error(e);
                 alert("Erro ao criar conta.");
@@ -295,15 +448,71 @@
             currentUserData = userData;
             localStorage.setItem('whatchat_username', userData.username);
 
-            document.getElementById('my-profile-name').textContent = userData.name;
-            document.getElementById('my-profile-username').textContent = '@' + userData.username;
-            document.getElementById('user-avatar-initial').textContent = userData.name.charAt(0).toUpperCase();
+            atualizarUIPerfilProprio();
 
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('chat-screen').classList.remove('hidden');
 
+            if ("Notification" in window && Notification.permission !== "granted") {
+                Notification.requestPermission();
+            }
+
             carregarContatos();
         }
+
+        function atualizarUIPerfilProprio() {
+            document.getElementById('my-profile-name').textContent = currentUserData.name;
+            document.getElementById('my-profile-status').textContent = currentUserData.status || "Disponível";
+
+            const avatarBox = document.getElementById('my-profile-avatar-box');
+            if (currentUserData.avatar) {
+                avatarBox.innerHTML = `<img src="${currentUserData.avatar}" class="w-full h-full object-cover rounded-xl" onerror="this.src=''; this.parentElement.innerHTML='<span id=\'user-avatar-initial\'>${currentUserData.name.charAt(0).toUpperCase()}</span>'">`;
+            } else {
+                avatarBox.innerHTML = `<span id="user-avatar-initial">${currentUserData.name.charAt(0).toUpperCase()}</span>`;
+            }
+        }
+
+        window.toggleEditProfileModal = () => {
+            const modal = document.getElementById('edit-profile-modal');
+            modal.classList.toggle('hidden');
+            if (!modal.classList.contains('hidden')) {
+                document.getElementById('edit-name-input').value = currentUserData.name || '';
+                document.getElementById('edit-status-input').value = currentUserData.status || '';
+                document.getElementById('edit-avatar-file').value = '';
+            }
+        };
+
+        window.salvarPerfil = async () => {
+            const novoNome = document.getElementById('edit-name-input').value.trim();
+            const avatarFile = document.getElementById('edit-avatar-file').files[0];
+            const novoStatus = document.getElementById('edit-status-input').value.trim();
+
+            if (!novoNome) return alert("O nome não pode estar vazio.");
+
+            try {
+                let novoAvatar = currentUserData.avatar || '';
+                if (avatarFile) {
+                    novoAvatar = await fileToBase64(avatarFile);
+                }
+
+                const userRef = doc(db, "chatUsers", currentUserData.username);
+                await updateDoc(userRef, {
+                    name: novoNome,
+                    avatar: novoAvatar,
+                    status: novoStatus
+                });
+
+                currentUserData.name = novoNome;
+                currentUserData.avatar = novoAvatar;
+                currentUserData.status = novoStatus;
+
+                atualizarUIPerfilProprio();
+                toggleEditProfileModal();
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao atualizar perfil.");
+            }
+        };
 
         window.onload = async () => {
             const savedUsername = localStorage.getItem('whatchat_username');
@@ -344,7 +553,8 @@
                 const snap = await getDoc(doc(db, "chatUsers", username));
                 if (!snap.exists()) return alert("Usuário não encontrado.");
 
-                const contatoInfo = { username: snap.data().username, name: snap.data().name };
+                const data = snap.data();
+                const contatoInfo = { username: data.username, name: data.name, avatar: data.avatar || '', status: data.status || '' };
                 await updateDoc(doc(db, "chatUsers", currentUserData.username), { contatos: arrayUnion(contatoInfo) });
 
                 contatosCache.push(contatoInfo);
@@ -383,20 +593,20 @@
             filtrados.forEach(user => {
                 const item = document.createElement('div');
                 item.className = "p-3 hover:bg-slate-800 cursor-pointer flex items-center gap-3 transition border-b border-slate-800/50";
-                
-                // Associa a função no escopo global para garantir clique correto
                 item.onclick = () => window.selectContact(user);
 
+                const avatarHTML = user.avatar
+                    ? `<img src="${user.avatar}" class="w-11 h-11 rounded-xl object-cover shadow-blue-glow">`
+                    : `<div class="w-11 h-11 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-blue-glow">${user.name.charAt(0).toUpperCase()}</div>`;
+
                 item.innerHTML = `
-                    <div class="w-11 h-11 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-blue-glow">
-                        ${user.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div class="flex-grow">
+                    ${avatarHTML}
+                    <div class="flex-grow min-w-0">
                         <div class="flex justify-between items-center">
-                            <h4 class="font-semibold text-white text-sm">${user.name}</h4>
-                            <span class="text-[9px] text-orange-400 font-bold uppercase">@${user.username}</span>
+                            <h4 class="font-semibold text-white text-sm truncate">${user.name}</h4>
+                            <span class="text-[9px] text-orange-400 font-bold uppercase ml-2">@${user.username}</span>
                         </div>
-                        <p class="text-xs text-slate-400 truncate">Clique para abrir a conversa</p>
+                        <p class="text-xs text-slate-400 truncate">${user.status || 'Clique para abrir a conversa'}</p>
                     </div>
                 `;
                 list.appendChild(item);
@@ -407,18 +617,31 @@
             renderContactsList(document.getElementById('search-input').value);
         };
 
-        // Torna explicitamente global para resolver a seleção
-        window.selectContact = (user) => {
+        window.selectContact = async (user) => {
             activeContactUsername = user.username;
+            activeContactName = user.name;
+            isFirstLoad = true;
             
             document.getElementById('welcome-view').classList.add('hidden');
             const activeView = document.getElementById('active-chat-view');
             activeView.classList.remove('hidden');
             activeView.classList.add('flex');
 
-            document.getElementById('active-contact-name').textContent = user.name;
-            document.getElementById('active-contact-username').textContent = '@' + user.username;
-            document.getElementById('active-contact-avatar').textContent = user.name.charAt(0).toUpperCase();
+            let freshUser = user;
+            try {
+                const snap = await getDoc(doc(db, "chatUsers", user.username));
+                if (snap.exists()) freshUser = snap.data();
+            } catch(e) {}
+
+            document.getElementById('active-contact-name').textContent = freshUser.name;
+            document.getElementById('active-contact-status').textContent = freshUser.status ? `"${freshUser.status}"` : `@${freshUser.username}`;
+
+            const activeAvatarBox = document.getElementById('active-contact-avatar-box');
+            if (freshUser.avatar) {
+                activeAvatarBox.innerHTML = `<img src="${freshUser.avatar}" class="w-full h-full object-cover rounded-xl">`;
+            } else {
+                activeAvatarBox.innerHTML = `<span id="active-contact-avatar">${freshUser.name.charAt(0).toUpperCase()}</span>`;
+            }
 
             listenToMessages();
         };
@@ -434,20 +657,46 @@
 
             unsubscribeMessages = onSnapshot(q, (snapshot) => {
                 container.innerHTML = '';
+
                 snapshot.forEach((docSnap) => {
                     const msg = docSnap.data();
                     const isSent = msg.sender === currentUserData.username;
 
                     const bubble = document.createElement('div');
-                    bubble.className = `max-w-[65%] p-3 rounded-2xl text-xs ${
+                    bubble.className = `max-w-[70%] p-3 rounded-2xl text-xs ${
                         isSent
                             ? 'bg-sky-600 text-white self-end rounded-tr-none shadow-blue-glow'
                             : 'bg-slate-800 text-slate-100 border border-slate-700 self-start rounded-tl-none'
                     }`;
-                    bubble.innerHTML = `<div>${msg.text}</div>`;
+
+                    let contentHTML = '';
+                    if (msg.text) {
+                        contentHTML += `<div>${msg.text}</div>`;
+                    }
+                    if (msg.image) {
+                        contentHTML += `<img src="${msg.image}" class="rounded-xl max-w-full my-1 max-h-60 object-cover border border-slate-700">`;
+                    }
+                    if (msg.video) {
+                        contentHTML += `<video src="${msg.video}" controls class="rounded-xl max-w-full my-1 max-h-60 border border-slate-700"></video>`;
+                    }
+
+                    bubble.innerHTML = contentHTML;
                     container.appendChild(bubble);
                 });
+
+                if (!isFirstLoad) {
+                    snapshot.docChanges().forEach((change) => {
+                        if (change.type === "added") {
+                            const msgNova = change.doc.data();
+                            if (msgNova.sender !== currentUserData.username) {
+                                dispararNotificacaoEVibracao(msgNova.text);
+                            }
+                        }
+                    });
+                }
+
                 container.scrollTop = container.scrollHeight;
+                isFirstLoad = false;
             });
         }
 
@@ -460,6 +709,8 @@
             const chatId = [currentUserData.username, activeContactUsername].sort().join('_');
             await addDoc(collection(db, "chats", chatId, "messages"), {
                 text: text,
+                image: null,
+                video: null,
                 sender: currentUserData.username,
                 timestamp: new Date()
             });
