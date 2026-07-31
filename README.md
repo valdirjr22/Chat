@@ -45,7 +45,7 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body id="app-body" class="bg-slate-100 h-screen w-screen flex items-center justify-center p-0 md:p-4 overflow-hidden">
+<body id="app-body" class="bg-slate-100 h-screen w-screen flex items-center justify-center p-0 overflow-hidden">
 
     <div id="loading-screen" class="fixed inset-0 bg-white flex items-center justify-center z-[100]">
         <div class="text-slate-600 text-sm flex items-center gap-2">
@@ -123,7 +123,7 @@
         </div>
     </div>
 
-    <div id="chat-screen" class="bg-white w-full h-full max-w-[1600px] max-h-[920px] rounded-none md:rounded-2xl shadow-xl flex overflow-hidden border border-slate-200 hidden">
+    <div id="chat-screen" class="bg-white w-full h-full flex overflow-hidden hidden">
 
         <div class="w-full md:w-[380px] lg:w-[420px] bg-white border-r border-slate-200 flex flex-col h-full flex-shrink-0">
             <div class="bg-slate-50 p-3.5 flex justify-between items-center border-b border-slate-200">
@@ -190,7 +190,7 @@
             </div>
         </div>
 
-        <div class="flex flex-col flex-grow bg-slate-50 relative">
+        <div class="flex flex-col flex-grow bg-slate-50 relative h-full">
 
             <div id="welcome-view" class="flex flex-col items-center justify-center h-full text-center p-8 bg-slate-50">
                 <div class="w-28 h-28 bg-gradient-to-tr from-sky-500 to-orange-500 text-white rounded-3xl flex items-center justify-center text-5xl mb-6 shadow-neon">
@@ -364,7 +364,6 @@
         function inicializarPeerJS() {
             if (!currentUserData || myPeer) return;
 
-            // Configuração do PeerJS com Servidores STUN Públicos do Google
             myPeer = new Peer(`whatchat_${currentUserData.username}`, {
                 config: {
                     iceServers: [
@@ -422,7 +421,6 @@
                 document.getElementById('call-contact-name').textContent = activeContactName;
                 document.getElementById('active-call-modal').classList.remove('hidden');
 
-                // Envia sinal para o Firebase para avisar o outro usuário
                 await setDoc(doc(db, "calls", activeContactUsername), {
                     from: currentUserData.username,
                     fromName: currentUserData.name,
@@ -465,7 +463,6 @@
                 document.getElementById('call-contact-name').textContent = activeCallSignalData.fromName;
                 document.getElementById('active-call-modal').classList.remove('hidden');
 
-                // Atualiza o estado da chamada no Firebase
                 await updateDoc(doc(db, "calls", currentUserData.username), {
                     status: 'accepted'
                 });
