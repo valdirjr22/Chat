@@ -9,7 +9,6 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
 
-        /* Cores Neon & Efeitos Personalizados */
         .bg-neon-orange { background-color: #ff6b00; }
         .bg-neon-orange:hover { background-color: #e05e00; }
         .text-neon-orange { color: #ff6b00; }
@@ -18,7 +17,6 @@
         .shadow-neon { box-shadow: 0 0 15px rgba(255, 107, 0, 0.4); }
         .shadow-blue-glow { box-shadow: 0 0 15px rgba(14, 165, 233, 0.3); }
 
-        /* Estilização da Aba Ativa em Azul/Laranja */
         .tab-btn.active {
             color: #ff6b00;
             border-bottom: 3px solid #ff6b00;
@@ -27,7 +25,6 @@
 
         .hidden { display: none !important; }
 
-        /* Scrollbar Personalizada */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 10px; }
@@ -42,7 +39,7 @@
         </div>
     </div>
 
-    <div id="auth-screen" class="bg-slate-800 border border-slate-700 rounded-2xl shadow-blue-glow w-full max-w-md p-8 z-50 text-white hidden">
+    <div id="auth-screen" class="bg-slate-800 border border-slate-700 rounded-2xl shadow-blue-glow w-full max-w-md p-8 z-50 text-white">
         <div class="text-center mb-6">
             <div class="w-16 h-16 bg-gradient-to-tr from-sky-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-neon transform rotate-3">
                 <i class="fas fa-bolt text-white text-3xl"></i>
@@ -101,10 +98,9 @@
         </div>
     </div>
 
-    <div id="chat-screen" class="bg-slate-900 w-full h-full max-w-[1600px] max-h-[920px] rounded-none md:rounded-2xl shadow-2xl flex overflow-hidden hidden border border-slate-800">
+    <div id="chat-screen" class="bg-slate-900 w-full h-full max-w-[1600px] max-h-[920px] rounded-none md:rounded-2xl shadow-2xl flex overflow-hidden border border-slate-800 hidden">
 
         <div class="w-full md:w-[380px] lg:w-[420px] bg-slate-900 border-r border-slate-800 flex flex-col h-full flex-shrink-0">
-
             <div class="bg-slate-800 p-3.5 flex justify-between items-center border-b border-slate-700">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-gradient-to-tr from-sky-500 to-orange-500 rounded-xl flex items-center justify-center text-white font-bold shadow-neon">
@@ -141,7 +137,6 @@
             </div>
 
             <div class="flex-grow overflow-y-auto bg-slate-900">
-
                 <div id="tab-content-chats" class="divide-y divide-slate-800">
                     <div id="contacts-list"></div>
                     <p id="contacts-empty" class="text-xs text-slate-500 text-center py-6 hidden">Nenhum contato ainda. Clique em <i class="fas fa-user-plus"></i> para adicionar.</p>
@@ -149,48 +144,38 @@
 
                 <div id="tab-content-status" class="p-4 hidden space-y-4">
                     <div class="flex items-center gap-3 cursor-pointer p-3 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 transition">
-                        <div class="relative">
-                            <div class="w-12 h-12 bg-sky-500/20 text-orange-400 rounded-full flex items-center justify-center font-bold border border-orange-500">
-                                <i class="fas fa-plus"></i>
-                            </div>
+                        <div class="w-12 h-12 bg-sky-500/20 text-orange-400 rounded-full flex items-center justify-center font-bold border border-orange-500">
+                            <i class="fas fa-plus"></i>
                         </div>
                         <div>
                             <h4 class="font-bold text-sm text-white">Meu Status</h4>
                             <p class="text-xs text-slate-400">Compartilhe uma atualização no What Chat</p>
                         </div>
                     </div>
-                    <div class="text-[10px] font-bold text-orange-400 uppercase tracking-wider mt-4">Atualizações recentes</div>
-                    <p class="text-xs text-slate-500 text-center py-6">Nenhum status publicado hoje.</p>
                 </div>
 
                 <div id="tab-content-calls" class="p-4 hidden">
-                    <div class="text-[10px] font-bold text-sky-400 uppercase tracking-wider mb-2">Histórico Recente</div>
                     <div class="text-center py-10 text-slate-500">
                         <i class="fas fa-phone-slash text-3xl mb-2 text-slate-600"></i>
                         <p class="text-xs">Nenhuma chamada registrada.</p>
                     </div>
                 </div>
-
             </div>
         </div>
 
-        <div class="hidden md:flex flex-col flex-grow bg-slate-950 relative">
+        <div class="flex flex-col flex-grow bg-slate-950 relative">
 
             <div id="welcome-view" class="flex flex-col items-center justify-center h-full text-center p-8 bg-slate-950">
-                <div class="w-28 h-28 bg-gradient-to-tr from-sky-500 to-orange-500 text-white rounded-3xl flex items-center justify-center text-5xl mb-6 shadow-neon transform hover:scale-105 transition">
+                <div class="w-28 h-28 bg-gradient-to-tr from-sky-500 to-orange-500 text-white rounded-3xl flex items-center justify-center text-5xl mb-6 shadow-neon">
                     <i class="fas fa-bolt"></i>
                 </div>
                 <h1 class="text-3xl font-extrabold bg-gradient-to-r from-sky-400 to-orange-500 bg-clip-text text-transparent mb-2">What Chat Web</h1>
-                <p class="text-xs text-slate-400 max-w-md leading-relaxed mb-6">
-                    Mensagens em tempo real com visual moderno e de alta performance. Selecione um contato na lista ou adicione um novo usuário para conversar.
+                <p class="text-xs text-slate-400 max-w-md leading-relaxed">
+                    Selecione um contato na lista ao lado para começar a conversar.
                 </p>
-                <div class="flex items-center gap-2 text-xs text-slate-500 border border-slate-800 bg-slate-900 px-4 py-2 rounded-full shadow-sm">
-                    <i class="fas fa-shield-alt text-orange-400"></i> Dados salvos na nuvem (Firestore)
-                </div>
             </div>
 
             <div id="active-chat-view" class="flex-col h-full hidden">
-
                 <div class="p-3.5 bg-slate-900 border-b border-slate-800 flex justify-between items-center">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold shadow-blue-glow">
@@ -201,23 +186,16 @@
                             <p id="active-contact-username" class="text-[10px] text-orange-400">@usuario</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-4 text-slate-400 text-base">
-                        <button title="Pesquisar" class="hover:text-orange-400 transition"><i class="fas fa-search"></i></button>
-                        <button title="Opções" class="hover:text-orange-400 transition"><i class="fas fa-ellipsis-v"></i></button>
-                    </div>
                 </div>
 
                 <div id="messages-container" class="flex-grow p-6 overflow-y-auto space-y-3 bg-slate-950 flex flex-col"></div>
 
                 <form onsubmit="sendMessage(event)" class="p-3 bg-slate-900 border-t border-slate-800 flex items-center gap-3">
-                    <button type="button" class="text-slate-400 text-xl hover:text-orange-400 transition"><i class="far fa-smile"></i></button>
-                    <button type="button" class="text-slate-400 text-xl hover:text-orange-400 transition"><i class="fas fa-paperclip"></i></button>
-                    <input type="text" id="message-input" placeholder="Digite sua mensagem no What Chat..." class="flex-grow py-2.5 px-4 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500">
+                    <input type="text" id="message-input" placeholder="Digite sua mensagem..." class="flex-grow py-2.5 px-4 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500">
                     <button type="submit" id="send-btn" class="bg-neon-orange hover:bg-orange-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-neon transition">
                         <i class="fas fa-paper-plane text-sm"></i>
                     </button>
                 </form>
-
             </div>
 
         </div>
@@ -229,10 +207,9 @@
             <h3 class="text-lg font-bold text-white flex items-center gap-2">
                 <i class="fas fa-user-plus text-orange-400"></i> Novo Contato
             </h3>
-            <p class="text-xs text-slate-400">Insira o nome de usuário cadastrado no What Chat para iniciar a conversa.</p>
             <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-1">Usuário</label>
-                <input type="text" id="new-contact-username" placeholder="Ex: lucas.silva" class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-orange-500">
+                <input type="text" id="new-contact-username" placeholder="Ex: victorblox" class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-orange-500">
             </div>
             <div class="flex justify-end gap-2 pt-2">
                 <button onclick="toggleAddContactModal()" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-lg">Cancelar</button>
@@ -266,72 +243,51 @@
             return (u || '').trim().toLowerCase().replace(/\s+/g, '');
         }
 
-        // Alternar Login / Cadastro
         window.mostrarCadastro = () => {
             document.getElementById('login-step').classList.add('hidden');
             document.getElementById('cadastro-step').classList.remove('hidden');
         };
+
         window.mostrarLogin = () => {
             document.getElementById('cadastro-step').classList.add('hidden');
             document.getElementById('login-step').classList.remove('hidden');
         };
 
-        // Criar Conta
         window.criarConta = async () => {
             const nome = document.getElementById('cadastro-nome-input').value.trim();
-            const usernameRaw = document.getElementById('cadastro-username-input').value.trim();
+            const username = normalizarUsuario(document.getElementById('cadastro-username-input').value);
             const senha = document.getElementById('cadastro-senha-input').value;
-            const username = normalizarUsuario(usernameRaw);
 
-            if (!nome || !username || !senha) return alert("Preencha nome, usuário e senha.");
-
-            const btn = document.getElementById('cadastro-btn');
-            btn.disabled = true; btn.textContent = 'Criando...';
+            if (!nome || !username || !senha) return alert("Preencha todos os campos.");
 
             try {
                 const ref = doc(db, "chatUsers", username);
                 const existente = await getDoc(ref);
-                if (existente.exists()) {
-                    alert("Esse nome de usuário já está em uso. Escolha outro.");
-                    btn.disabled = false; btn.textContent = 'Criar Conta no What Chat';
-                    return;
-                }
+                if (existente.exists()) return alert("Esse usuário já existe.");
 
                 await setDoc(ref, { username, name: nome, password: senha, contatos: [] });
                 entrarComoUsuario({ username, name: nome, contatos: [] });
             } catch (e) {
                 console.error(e);
-                alert("Erro ao criar conta. Verifique sua conexão.");
-                btn.disabled = false; btn.textContent = 'Criar Conta no What Chat';
+                alert("Erro ao criar conta.");
             }
         };
 
-        // Login
         window.fazerLogin = async () => {
-            const usernameRaw = document.getElementById('login-username-input').value.trim();
+            const username = normalizarUsuario(document.getElementById('login-username-input').value);
             const senha = document.getElementById('login-password-input').value;
-            const username = normalizarUsuario(usernameRaw);
 
             if (!username || !senha) return alert("Preencha usuário e senha.");
 
-            const btn = document.getElementById('login-btn');
-            btn.disabled = true; btn.textContent = 'Entrando...';
-
             try {
-                const ref = doc(db, "chatUsers", username);
-                const snap = await getDoc(ref);
-
+                const snap = await getDoc(doc(db, "chatUsers", username));
                 if (!snap.exists() || snap.data().password !== senha) {
-                    alert("Usuário ou senha incorretos.");
-                    btn.disabled = false; btn.innerHTML = '<span>Entrar</span> <i class="fas fa-arrow-right text-xs"></i>';
-                    return;
+                    return alert("Usuário ou senha incorretos.");
                 }
-
                 entrarComoUsuario(snap.data());
             } catch (e) {
                 console.error(e);
-                alert("Erro ao entrar. Verifique sua conexão.");
-                btn.disabled = false; btn.innerHTML = '<span>Entrar</span> <i class="fas fa-arrow-right text-xs"></i>';
+                alert("Erro ao fazer login.");
             }
         };
 
@@ -343,27 +299,20 @@
             document.getElementById('my-profile-username').textContent = '@' + userData.username;
             document.getElementById('user-avatar-initial').textContent = userData.name.charAt(0).toUpperCase();
 
-            // Oculta login e exibe tela do chat
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('chat-screen').classList.remove('hidden');
 
             carregarContatos();
         }
 
-        // Verificar sessão salva
         window.onload = async () => {
             const savedUsername = localStorage.getItem('whatchat_username');
             if (savedUsername) {
                 try {
                     const snap = await getDoc(doc(db, "chatUsers", savedUsername));
-                    if (snap.exists()) {
-                        entrarComoUsuario(snap.data());
-                    } else {
-                        localStorage.removeItem('whatchat_username');
-                        document.getElementById('auth-screen').classList.remove('hidden');
-                    }
+                    if (snap.exists()) entrarComoUsuario(snap.data());
+                    else document.getElementById('auth-screen').classList.remove('hidden');
                 } catch (e) {
-                    console.error(e);
                     document.getElementById('auth-screen').classList.remove('hidden');
                 }
             } else {
@@ -372,7 +321,6 @@
             document.getElementById('loading-screen').classList.add('hidden');
         };
 
-        // Alternância de Abas
         window.switchTab = (tabName) => {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`tab-btn-${tabName}`).classList.add('active');
@@ -384,26 +332,17 @@
             document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
         };
 
-        // Modal Contato
         window.toggleAddContactModal = () => {
             document.getElementById('add-contact-modal').classList.toggle('hidden');
         };
 
-        // Adicionar Contato
         window.addContact = async () => {
-            const usernameRaw = document.getElementById('new-contact-username').value.trim();
-            const username = normalizarUsuario(usernameRaw);
-
-            if (!username || username === currentUserData.username) return alert("Insira um usuário válido diferente do seu.");
+            const username = normalizarUsuario(document.getElementById('new-contact-username').value);
+            if (!username || username === currentUserData.username) return alert("Usuário inválido.");
 
             try {
-                const snap = await getDoc(doc(doc(db, "chatUsers", username)));
+                const snap = await getDoc(doc(db, "chatUsers", username));
                 if (!snap.exists()) return alert("Usuário não encontrado.");
-
-                if (contatosCache.find(c => c.username === username)) {
-                    toggleAddContactModal();
-                    return;
-                }
 
                 const contatoInfo = { username: snap.data().username, name: snap.data().name };
                 await updateDoc(doc(db, "chatUsers", currentUserData.username), { contatos: arrayUnion(contatoInfo) });
@@ -444,7 +383,10 @@
             filtrados.forEach(user => {
                 const item = document.createElement('div');
                 item.className = "p-3 hover:bg-slate-800 cursor-pointer flex items-center gap-3 transition border-b border-slate-800/50";
-                item.onclick = () => selectContact(user);
+                
+                // Associa a função no escopo global para garantir clique correto
+                item.onclick = () => window.selectContact(user);
+
                 item.innerHTML = `
                     <div class="w-11 h-11 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-blue-glow">
                         ${user.name.charAt(0).toUpperCase()}
@@ -454,7 +396,7 @@
                             <h4 class="font-semibold text-white text-sm">${user.name}</h4>
                             <span class="text-[9px] text-orange-400 font-bold uppercase">@${user.username}</span>
                         </div>
-                        <p class="text-xs text-slate-400 truncate">Toque para conversar</p>
+                        <p class="text-xs text-slate-400 truncate">Clique para abrir a conversa</p>
                     </div>
                 `;
                 list.appendChild(item);
@@ -462,22 +404,24 @@
         }
 
         window.filterContacts = () => {
-            const termo = document.getElementById('search-input').value;
-            renderContactsList(termo);
+            renderContactsList(document.getElementById('search-input').value);
         };
 
-        function selectContact(user) {
+        // Torna explicitamente global para resolver a seleção
+        window.selectContact = (user) => {
             activeContactUsername = user.username;
+            
             document.getElementById('welcome-view').classList.add('hidden');
-            document.getElementById('active-chat-view').classList.remove('hidden');
-            document.getElementById('active-chat-view').classList.add('flex');
+            const activeView = document.getElementById('active-chat-view');
+            activeView.classList.remove('hidden');
+            activeView.classList.add('flex');
 
             document.getElementById('active-contact-name').textContent = user.name;
             document.getElementById('active-contact-username').textContent = '@' + user.username;
             document.getElementById('active-contact-avatar').textContent = user.name.charAt(0).toUpperCase();
 
             listenToMessages();
-        }
+        };
 
         function listenToMessages() {
             if (unsubscribeMessages) unsubscribeMessages();
@@ -500,10 +444,7 @@
                             ? 'bg-sky-600 text-white self-end rounded-tr-none shadow-blue-glow'
                             : 'bg-slate-800 text-slate-100 border border-slate-700 self-start rounded-tl-none'
                     }`;
-                    bubble.innerHTML = `
-                        <div>${msg.text}</div>
-                        <div class="text-[9px] ${isSent ? 'text-sky-200' : 'text-slate-400'} text-right mt-1">Agora</div>
-                    `;
+                    bubble.innerHTML = `<div>${msg.text}</div>`;
                     container.appendChild(bubble);
                 });
                 container.scrollTop = container.scrollHeight;
