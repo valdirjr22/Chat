@@ -14,7 +14,7 @@
             margin: 0;
             padding: 0;
             overflow-x: hidden;
-            overflow-y: auto; /* Permite rolagem vertical na página inteira */
+            overflow-y: auto;
             font-family: 'Inter', sans-serif;
         }
 
@@ -264,11 +264,14 @@
                     <button type="button" title="Tirar Foto ou Gravar Vídeo" onclick="document.getElementById('media-camera-input').click()" class="text-slate-500 hover:text-orange-500 p-2 transition text-base">
                         <i class="fas fa-camera"></i>
                     </button>
+                    <button type="button" id="voice-record-btn" title="Gravar Mensagem de Voz" onclick="toggleGravarAudio()" class="text-slate-500 hover:text-red-500 p-2 transition text-base">
+                        <i id="voice-icon" class="fas fa-microphone"></i>
+                    </button>
 
                     <input type="text" id="message-input" placeholder="Digite sua mensagem..." class="flex-grow py-2.5 px-4 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-orange-500">
                     
                     <button type="submit" id="send-btn" class="bg-neon-orange hover:bg-orange-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-neon transition flex-shrink-0">
-                        <i class="fas fa-paperplane text-sm"></i>
+                        <i class="fas fa-paper-plane text-sm"></i>
                     </button>
                 </form>
             </div>
@@ -383,6 +386,11 @@
         let localStream = null;
         let activeCallSignalData = null;
         let isVideoCall = true;
+
+        // Variáveis para gravação de áudio
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
 
         function normalizarUsuario(u) {
             return (u || '').trim().toLowerCase().replace(/\s+/g, '');
@@ -581,6 +589,7 @@
                     text: '',
                     image: isImage ? base64Data : null,
                     video: isVideo ? base64Data : null,
+                    audio: null,
                     fileName: fileName,
                     sender: currentUserData.username,
                     timestamp: new Date()
@@ -590,6 +599,69 @@
             } catch (err) {
                 console.error(err);
                 alert("Erro ao processar o arquivo de mídia.");
+            }
+        };
+
+        // Função para gravar e enviar mensagem de voz
+        window.toggleGravarAudio = async () => {
+            if (!activeContactUsername) return;
+            const icon = document.getElementById('voice-icon');
+            const btn = document.getElementById('voice-record-btn');
+
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = (event) => {
+                        if (event.data.size > 0) {
+                            audioChunks.push(event.data);
+                        }
+                    };
+
+                    mediaRecorder.onstop = async () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const reader = new FileReader();
+                        reader.readAsDataURL(audioBlob);
+                        reader.onloadend = async () => {
+                            const base64Audio = reader.result;
+                            const chatId = [currentUserData.username, activeContactUsername].sort().join('_');
+
+                            try {
+                                await addDoc(collection(db, "chats", chatId, "messages"), {
+                                    text: '',
+                                    image: null,
+                                    video: null,
+                                    audio: base64Audio,
+                                    fileName: 'audio_voz.webm',
+                                    sender: currentUserData.username,
+                                    timestamp: new Date()
+                                });
+                            } catch (err) {
+                                console.error(err);
+                                alert("Erro ao enviar mensagem de voz.");
+                            }
+                        };
+
+                        stream.getTracks().forEach(track => track.stop());
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    icon.classList.remove('fa-microphone');
+                    icon.classList.add('fa-stop', 'text-red-500', 'animate-pulse');
+                    btn.title = "Parar e Enviar Áudio";
+                } catch (err) {
+                    console.error(err);
+                    alert("Não foi possível acessar o microfone.");
+                }
+            } else {
+                mediaRecorder.stop();
+                isRecording = false;
+                icon.classList.remove('fa-stop', 'text-red-500', 'animate-pulse');
+                icon.classList.add('fa-microphone');
+                btn.title = "Gravar Mensagem de Voz";
             }
         };
 
@@ -612,7 +684,7 @@
 
             if ("Notification" in window && Notification.permission === "granted") {
                 new Notification(`Nova mensagem de ${activeContactName}`, {
-                    body: textoMensagem || "Enviou uma mídia",
+                    body: textoMensagem || "Enviou uma mídia ou áudio",
                     icon: "https://cdn-icons-png.flaticon.com/512/732/732200.png"
                 });
             }
@@ -927,6 +999,13 @@
                             </div>
                         `;
                     }
+                    if (msg.audio) {
+                        contentHTML += `
+                            <div class="my-1">
+                                <audio src="${msg.audio}" controls class="w-full max-w-[240px] h-10"></audio>
+                            </div>
+                        `;
+                    }
 
                     contentHTML += `
                         <button onclick="apagarMensagem('${msgId}')" title="Apagar Mensagem" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition ${isSent ? 'text-sky-200 hover:text-white' : 'text-slate-400 hover:text-red-500'}">
@@ -965,6 +1044,7 @@
                 text: text,
                 image: null,
                 video: null,
+                audio: null,
                 sender: currentUserData.username,
                 timestamp: new Date()
             });
