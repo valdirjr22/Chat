@@ -245,7 +245,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, arrayUnion, addDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // >>> SUBSTITUA pelos dados do SEU projeto Firebase (Configurações do projeto > Seus apps) <<<
         const firebaseConfig = {
             apiKey: "AIzaSyAyYH6zCoOZhrg30e076s3trA-0PYi7ARY",
             authDomain: "chatray-95091.firebaseapp.com",
@@ -258,16 +257,16 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        let currentUserData = null; // { username, name, contatos: [] }
+        let currentUserData = null;
         let activeContactUsername = null;
         let unsubscribeMessages = null;
-        let contatosCache = []; // lista de { username, name }
+        let contatosCache = [];
 
         function normalizarUsuario(u) {
             return (u || '').trim().toLowerCase().replace(/\s+/g, '');
         }
 
-        // ---------- Alternância Login / Cadastro ----------
+        // Alternar Login / Cadastro
         window.mostrarCadastro = () => {
             document.getElementById('login-step').classList.add('hidden');
             document.getElementById('cadastro-step').classList.remove('hidden');
@@ -277,7 +276,7 @@
             document.getElementById('login-step').classList.remove('hidden');
         };
 
-        // ---------- Criar Conta ----------
+        // Criar Conta
         window.criarConta = async () => {
             const nome = document.getElementById('cadastro-nome-input').value.trim();
             const usernameRaw = document.getElementById('cadastro-username-input').value.trim();
@@ -302,12 +301,12 @@
                 entrarComoUsuario({ username, name: nome, contatos: [] });
             } catch (e) {
                 console.error(e);
-                alert("Erro ao criar conta. Verifique sua conexão e a configuração do Firebase.");
+                alert("Erro ao criar conta. Verifique sua conexão.");
                 btn.disabled = false; btn.textContent = 'Criar Conta no What Chat';
             }
         };
 
-        // ---------- Login ----------
+        // Login
         window.fazerLogin = async () => {
             const usernameRaw = document.getElementById('login-username-input').value.trim();
             const senha = document.getElementById('login-password-input').value;
@@ -331,7 +330,7 @@
                 entrarComoUsuario(snap.data());
             } catch (e) {
                 console.error(e);
-                alert("Erro ao entrar. Verifique sua conexão e a configuração do Firebase.");
+                alert("Erro ao entrar. Verifique sua conexão.");
                 btn.disabled = false; btn.innerHTML = '<span>Entrar</span> <i class="fas fa-arrow-right text-xs"></i>';
             }
         };
@@ -344,13 +343,14 @@
             document.getElementById('my-profile-username').textContent = '@' + userData.username;
             document.getElementById('user-avatar-initial').textContent = userData.name.charAt(0).toUpperCase();
 
+            // Oculta login e exibe tela do chat
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('chat-screen').classList.remove('hidden');
 
             carregarContatos();
         }
 
-        // ---------- Sessão salva (permanece logado no mesmo navegador) ----------
+        // Verificar sessão salva
         window.onload = async () => {
             const savedUsername = localStorage.getItem('whatchat_username');
             if (savedUsername) {
@@ -360,16 +360,19 @@
                         entrarComoUsuario(snap.data());
                     } else {
                         localStorage.removeItem('whatchat_username');
+                        document.getElementById('auth-screen').classList.remove('hidden');
                     }
                 } catch (e) {
                     console.error(e);
+                    document.getElementById('auth-screen').classList.remove('hidden');
                 }
+            } else {
+                document.getElementById('auth-screen').classList.remove('hidden');
             }
             document.getElementById('loading-screen').classList.add('hidden');
-            document.getElementById('auth-screen').classList.remove('hidden');
         };
 
-        // ---------- Abas (Conversas, Status, Chamadas) ----------
+        // Alternância de Abas
         window.switchTab = (tabName) => {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`tab-btn-${tabName}`).classList.add('active');
@@ -381,21 +384,21 @@
             document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
         };
 
-        // ---------- Modal de Contatos ----------
+        // Modal Contato
         window.toggleAddContactModal = () => {
             document.getElementById('add-contact-modal').classList.toggle('hidden');
         };
 
-        // ---------- Adicionar Contato pelo Usuário ----------
+        // Adicionar Contato
         window.addContact = async () => {
             const usernameRaw = document.getElementById('new-contact-username').value.trim();
             const username = normalizarUsuario(usernameRaw);
 
-            if (!username || username === currentUserData.username) return alert("Insira um nome de usuário válido (diferente do seu).");
+            if (!username || username === currentUserData.username) return alert("Insira um usuário válido diferente do seu.");
 
             try {
-                const snap = await getDoc(doc(db, "chatUsers", username));
-                if (!snap.exists()) return alert("Esse usuário ainda não está cadastrado no What Chat.");
+                const snap = await getDoc(doc(doc(db, "chatUsers", username)));
+                if (!snap.exists()) return alert("Usuário não encontrado.");
 
                 if (contatosCache.find(c => c.username === username)) {
                     toggleAddContactModal();
@@ -463,7 +466,6 @@
             renderContactsList(termo);
         };
 
-        // ---------- Selecionar Contato Ativo ----------
         function selectContact(user) {
             activeContactUsername = user.username;
             document.getElementById('welcome-view').classList.add('hidden');
@@ -477,7 +479,6 @@
             listenToMessages();
         }
 
-        // ---------- Mensagens em Tempo Real ----------
         function listenToMessages() {
             if (unsubscribeMessages) unsubscribeMessages();
 
