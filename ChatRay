@@ -1,4 +1,4 @@
-<html lang="pt-BR" class="w-full h-full m-0 p-0 overflow-hidden">
+<html lang="pt-BR" class="w-full h-full m-0 p-0">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -9,12 +9,12 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         html, body {
-            width: 100vw !important;
-            height: 100vh !important;
-            height: 100dvh !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            overflow: hidden !important;
+            width: 100vw;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            overflow-y: auto;
             font-family: 'Inter', sans-serif;
         }
 
@@ -59,8 +59,7 @@
         #incoming-call-modal,
         #active-call-modal,
         #edit-profile-modal,
-        #add-contact-modal,
-        #media-modal {
+        #add-contact-modal {
             box-sizing: border-box !important;
             padding-top: env(safe-area-inset-top, 0px) !important;
             padding-right: env(safe-area-inset-right, 0px) !important;
@@ -74,7 +73,7 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body id="app-body" class="bg-slate-100 w-full h-full m-0 p-0 flex items-center justify-center overflow-hidden">
+<body id="app-body" class="bg-slate-100 w-full min-h-screen m-0 p-0 flex items-center justify-center">
 
     <div id="loading-screen" class="fixed inset-0 bg-white flex items-center justify-center z-[100]">
         <div class="text-slate-600 text-sm flex items-center gap-2">
@@ -152,7 +151,7 @@
         </div>
     </div>
 
-    <div id="chat-screen" class="bg-white w-full h-full max-w-none md:max-w-6xl md:h-[90vh] md:rounded-2xl shadow-none md:shadow-xl flex overflow-hidden hidden m-0 md:my-auto border-0 md:border border-slate-200">
+    <div id="chat-screen" class="fixed inset-0 bg-white w-full h-full flex overflow-hidden hidden z-40">
 
         <div class="w-80 md:w-[350px] lg:w-[380px] bg-white border-r border-slate-200 flex flex-col h-full flex-shrink-0">
             <div class="bg-slate-50 p-3.5 flex justify-between items-center border-b border-slate-200">
@@ -244,6 +243,9 @@
                     </div>
 
                     <div class="flex items-center gap-4 text-slate-600 text-lg pr-2">
+                        <button title="Alternar Tela Cheia" onclick="toggleFullScreen()" class="hover:text-emerald-600 transition p-1">
+                            <i class="fas fa-expand" id="fullscreen-icon"></i>
+                        </button>
                         <button title="Chamada de Voz" onclick="iniciarChamada(false)" class="hover:text-sky-600 transition p-1">
                             <i class="fas fa-phone"></i>
                         </button>
@@ -279,14 +281,6 @@
 
         </div>
 
-    </div>
-
-    <div id="media-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center hidden z-[100] p-4">
-        <button onclick="fecharMidiaTelaCheia()" class="absolute top-4 right-4 text-white text-3xl hover:text-orange-500 transition z-10">
-            <i class="fas fa-times"></i>
-        </button>
-        <div id="media-modal-content" class="relative max-w-5xl max-h-[90vh] flex items-center justify-center w-full h-full">
-            </div>
     </div>
 
     <div id="incoming-call-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden z-[70] p-4">
@@ -343,6 +337,16 @@
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Recado / Mensagem de Perfil</label>
                 <input type="text" id="edit-status-input" placeholder="Ex: Disponível no What Chat!" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-orange-500">
             </div>
+            <hr class="border-slate-200">
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Usuário (@)</label>
+                <input type="text" id="edit-username-input" placeholder="Ex: lucas.silva" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-orange-500">
+                <p class="text-[10px] text-slate-400 mt-1">Atenção: alterar o usuário muda o seu @ de acesso. Suas conversas atuais continuarão salvas com o usuário antigo.</p>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Nova Senha (deixe em branco para não alterar)</label>
+                <input type="password" id="edit-password-input" placeholder="••••••••" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-orange-500">
+            </div>
             <div class="flex justify-end gap-2 pt-2">
                 <button onclick="toggleEditProfileModal()" class="px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-800 rounded-lg">Cancelar</button>
                 <button onclick="salvarPerfil()" class="px-4 py-2 text-xs font-bold bg-neon-orange text-white rounded-lg shadow-neon hover:bg-orange-600">Salvar</button>
@@ -396,106 +400,58 @@
         let activeCallSignalData = null;
         let isVideoCall = true;
 
+        // Variáveis para gravação de áudio
         let mediaRecorder = null;
         let audioChunks = [];
         let isRecording = false;
 
-        function normalizarUsuario(u) {
-            return (u || '').trim().toLowerCase().replace(/\s+/g, '');
-        }
+        // Função para alternar modo Tela Cheia (Fullscreen API)
+        window.toggleFullScreen = () => {
+            const docElement = document.documentElement;
+            const icon = document.getElementById('fullscreen-icon');
 
-        window.abrirMidiaTelaCheia = (tipo, src, event) => {
-            if (event && event.target && event.target.tagName === 'VIDEO') {
-                event.target.pause();
+            if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+                if (docElement.requestFullscreen) {
+                    docElement.requestFullscreen();
+                } else if (docElement.webkitRequestFullscreen) {
+                    docElement.webkitRequestFullscreen();
+                } else if (docElement.msRequestFullscreen) {
+                    docElement.msRequestFullscreen();
+                }
+                if (icon) {
+                    icon.classList.remove('fa-expand');
+                    icon.classList.add('fa-compress');
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+                if (icon) {
+                    icon.classList.remove('fa-compress');
+                    icon.classList.add('fa-expand');
+                }
             }
-
-            const modal = document.getElementById('media-modal');
-            const contentContainer = document.getElementById('media-modal-content');
-            
-            if (tipo === 'image') {
-                contentContainer.innerHTML = `<img src="${src}" class="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl">`;
-            } else if (tipo === 'video') {
-                contentContainer.innerHTML = `<video src="${src}" controls autoplay class="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl"></video>`;
-            }
-            
-            modal.classList.remove('hidden');
         };
 
-        window.fecharMidiaTelaCheia = () => {
-            const modal = document.getElementById('media-modal');
-            const contentContainer = document.getElementById('media-modal-content');
-            contentContainer.innerHTML = '';
-            modal.classList.add('hidden');
-        };
-
-        document.getElementById('media-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'media-modal') {
-                fecharMidiaTelaCheia();
+        // Sincroniza o ícone caso o usuário saia da tela cheia via tecla ESC
+        document.addEventListener('fullscreenchange', () => {
+            const icon = document.getElementById('fullscreen-icon');
+            if (!icon) return;
+            if (!document.fullscreenElement) {
+                icon.classList.remove('fa-compress');
+                icon.classList.add('fa-expand');
+            } else {
+                icon.classList.remove('fa-expand');
+                icon.classList.add('fa-compress');
             }
         });
 
-        window.togglePlayAudio = (btnEl, audioId) => {
-            const audio = document.getElementById(audioId);
-            const icon = btnEl.querySelector('i');
-            
-            document.querySelectorAll('audio').forEach(el => {
-                if (el !== audio) {
-                    el.pause();
-                    el.currentTime = 0;
-                    const otherBtn = document.getElementById(`btn_${el.id}`);
-                    if (otherBtn) {
-                        const otherIcon = otherBtn.querySelector('i');
-                        if (otherIcon) {
-                            otherIcon.className = "fas fa-play text-xs";
-                        }
-                    }
-                }
-            });
-
-            if (audio.paused) {
-                audio.play();
-                icon.className = "fas fa-pause text-xs";
-            } else {
-                audio.pause();
-                icon.className = "fas fa-play text-xs";
-            }
-        };
-
-        window.atualizarProgressoAudio = (audioEl, audioId) => {
-            const durationEl = document.getElementById(`dur_${audioId}`);
-            const progressBar = document.getElementById(`prog_${audioId}`);
-            
-            if (audioEl.duration) {
-                const atual = audioEl.currentTime;
-                const total = audioEl.duration;
-                
-                durationEl.textContent = formatarTempo(atual);
-
-                const porcentagem = (atual / total) * 100;
-                if (progressBar) progressBar.style.width = `${porcentagem}%`;
-            }
-        };
-
-        window.audioTerminou = (audioId) => {
-            const btn = document.getElementById(`btn_${audioId}`);
-            if (btn) {
-                const icon = btn.querySelector('i');
-                if (icon) icon.className = "fas fa-play text-xs";
-            }
-            const durationEl = document.getElementById(`dur_${audioId}`);
-            const audio = document.getElementById(audioId);
-            if (durationEl && audio) {
-                durationEl.textContent = formatarTempo(audio.duration || 0);
-            }
-            const progressBar = document.getElementById(`prog_${audioId}`);
-            if (progressBar) progressBar.style.width = '0%';
-        };
-
-        function formatarTempo(segundos) {
-            if (isNaN(segundos)) return "0:00";
-            const min = Math.floor(segundos / 60);
-            const seg = Math.floor(segundos % 60);
-            return `${min}:${seg < 10 ? '0' : ''}${seg}`;
+        function normalizarUsuario(u) {
+            return (u || '').trim().toLowerCase().replace(/\s+/g, '');
         }
 
         function inicializarPeerJS() {
@@ -581,7 +537,7 @@
 
             } catch (err) {
                 console.error(err);
-                alert("Não foi possível acessar a câmera ou microfone. Verifique as permissões ou se está usando HTTPS/localhost.");
+                alert("Não foi possível acessar a câmera ou microfone. Verifique as permissões.");
             }
         };
 
@@ -654,6 +610,30 @@
             document.getElementById('local-video').srcObject = null;
         }
 
+        function formatarDataHora(timestamp) {
+            if (!timestamp) return '';
+            let data;
+            if (typeof timestamp.toDate === 'function') {
+                data = timestamp.toDate();
+            } else if (timestamp instanceof Date) {
+                data = timestamp;
+            } else {
+                data = new Date(timestamp);
+            }
+            if (isNaN(data.getTime())) return '';
+
+            const hoje = new Date();
+            const ehHoje = data.toDateString() === hoje.toDateString();
+
+            const hora = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+            if (ehHoje) {
+                return hora;
+            }
+            const dataFormatada = data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+            return `${dataFormatada} ${hora}`;
+        }
+
         function fileToBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -704,27 +684,92 @@
             }
         };
 
+        // Função para gravar e enviar mensagem de voz
+        function getMimeTypeSuportado() {
+            const candidatos = [
+                'audio/webm;codecs=opus',
+                'audio/webm',
+                'audio/mp4',
+                'audio/ogg;codecs=opus',
+                'audio/ogg'
+            ];
+            if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) {
+                return '';
+            }
+            for (const tipo of candidatos) {
+                if (MediaRecorder.isTypeSupported(tipo)) return tipo;
+            }
+            return '';
+        }
+
         window.toggleGravarAudio = async () => {
             if (!activeContactUsername) return;
+
+            if (!window.isSecureContext) {
+                alert("A gravação de áudio só funciona em conexões seguras (HTTPS) ou em 'localhost'. Verifique o endereço que você está usando para acessar o What Chat.");
+                return;
+            }
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert("Seu navegador não tem suporte para gravação de áudio.");
+                return;
+            }
+
+            if (typeof MediaRecorder === 'undefined') {
+                alert("Seu navegador não tem suporte à gravação de mensagens de voz (MediaRecorder).");
+                return;
+            }
+
             const icon = document.getElementById('voice-icon');
             const btn = document.getElementById('voice-record-btn');
 
             if (!isRecording) {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream);
+                    const mimeType = getMimeTypeSuportado();
+
+                    mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
                     audioChunks = [];
 
                     mediaRecorder.ondataavailable = (event) => {
-                        if (event.data.size > 0) {
+                        if (event.data && event.data.size > 0) {
                             audioChunks.push(event.data);
                         }
                     };
 
+                    mediaRecorder.onerror = (event) => {
+                        console.error("Erro no MediaRecorder:", event.error);
+                        alert("Ocorreu um erro durante a gravação do áudio.");
+                        stream.getTracks().forEach(track => track.stop());
+                        isRecording = false;
+                        icon.classList.remove('fa-stop', 'text-red-500', 'animate-pulse');
+                        icon.classList.add('fa-microphone');
+                        btn.title = "Gravar Mensagem de Voz";
+                    };
+
                     mediaRecorder.onstop = async () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        stream.getTracks().forEach(track => track.stop());
+
+                        if (audioChunks.length === 0) {
+                            alert("Nenhum áudio foi capturado. Tente gravar novamente falando por mais tempo.");
+                            return;
+                        }
+
+                        const tipoFinal = mediaRecorder.mimeType || 'audio/webm';
+                        const audioBlob = new Blob(audioChunks, { type: tipoFinal });
+
+                        if (audioBlob.size === 0) {
+                            alert("O áudio gravado ficou vazio. Verifique o microfone e tente novamente.");
+                            return;
+                        }
+
+                        const extensao = tipoFinal.includes('mp4') ? 'm4a' : (tipoFinal.includes('ogg') ? 'ogg' : 'webm');
+
                         const reader = new FileReader();
-                        reader.readAsDataURL(audioBlob);
+                        reader.onerror = () => {
+                            console.error(reader.error);
+                            alert("Erro ao processar o áudio gravado.");
+                        };
                         reader.onloadend = async () => {
                             const base64Audio = reader.result;
                             const chatId = [currentUserData.username, activeContactUsername].sort().join('_');
@@ -735,17 +780,16 @@
                                     image: null,
                                     video: null,
                                     audio: base64Audio,
-                                    fileName: 'audio_voz.webm',
+                                    fileName: `audio_voz.${extensao}`,
                                     sender: currentUserData.username,
                                     timestamp: new Date()
                                 });
                             } catch (err) {
                                 console.error(err);
-                                alert("Erro ao enviar mensagem de voz.");
+                                alert("Erro ao enviar mensagem de voz. Verifique sua conexão e tente novamente.");
                             }
                         };
-
-                        stream.getTracks().forEach(track => track.stop());
+                        reader.readAsDataURL(audioBlob);
                     };
 
                     mediaRecorder.start();
@@ -755,10 +799,18 @@
                     btn.title = "Parar e Enviar Áudio";
                 } catch (err) {
                     console.error(err);
-                    alert("Não foi possível acessar o microfone.");
+                    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                        alert("Permissão para o microfone negada. Verifique as permissões do navegador/site para o What Chat.");
+                    } else if (err.name === 'NotFoundError') {
+                        alert("Nenhum microfone foi encontrado neste dispositivo.");
+                    } else {
+                        alert("Não foi possível acessar o microfone.");
+                    }
                 }
             } else {
-                mediaRecorder.stop();
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                    mediaRecorder.stop();
+                }
                 isRecording = false;
                 icon.classList.remove('fa-stop', 'text-red-500', 'animate-pulse');
                 icon.classList.add('fa-microphone');
@@ -883,6 +935,8 @@
                 document.getElementById('edit-name-input').value = currentUserData.name || '';
                 document.getElementById('edit-status-input').value = currentUserData.status || '';
                 document.getElementById('edit-avatar-file').value = '';
+                document.getElementById('edit-username-input').value = currentUserData.username || '';
+                document.getElementById('edit-password-input').value = '';
             }
         };
 
@@ -890,8 +944,11 @@
             const novoNome = document.getElementById('edit-name-input').value.trim();
             const avatarFile = document.getElementById('edit-avatar-file').files[0];
             const novoStatus = document.getElementById('edit-status-input').value.trim();
+            const novoUsername = normalizarUsuario(document.getElementById('edit-username-input').value);
+            const novaSenha = document.getElementById('edit-password-input').value;
 
             if (!novoNome) return alert("O nome não pode estar vazio.");
+            if (!novoUsername) return alert("O usuário não pode estar vazio.");
 
             try {
                 let novoAvatar = currentUserData.avatar || '';
@@ -899,16 +956,45 @@
                     novoAvatar = await fileToBase64(avatarFile);
                 }
 
-                const userRef = doc(db, "chatUsers", currentUserData.username);
-                await updateDoc(userRef, {
-                    name: novoNome,
-                    avatar: novoAvatar,
-                    status: novoStatus
-                });
+                const senhaFinal = novaSenha ? novaSenha : currentUserData.password;
+                const usernameAntigo = currentUserData.username;
+                const usernameMudou = novoUsername !== usernameAntigo;
 
-                currentUserData.name = novoNome;
-                currentUserData.avatar = novoAvatar;
-                currentUserData.status = novoStatus;
+                if (usernameMudou) {
+                    const existente = await getDoc(doc(db, "chatUsers", novoUsername));
+                    if (existente.exists()) {
+                        return alert("Esse nome de usuário já está em uso. Escolha outro.");
+                    }
+
+                    const novoUserData = {
+                        ...currentUserData,
+                        username: novoUsername,
+                        name: novoNome,
+                        avatar: novoAvatar,
+                        status: novoStatus,
+                        password: senhaFinal
+                    };
+                    await setDoc(doc(db, "chatUsers", novoUsername), novoUserData);
+                    await deleteDoc(doc(db, "chatUsers", usernameAntigo));
+
+                    currentUserData = novoUserData;
+                    localStorage.setItem('whatchat_username', novoUsername);
+
+                    alert("Usuário alterado com sucesso! Observação: conversas anteriores ficaram associadas ao usuário antigo e podem não aparecer mais.");
+                } else {
+                    const userRef = doc(db, "chatUsers", currentUserData.username);
+                    await updateDoc(userRef, {
+                        name: novoNome,
+                        avatar: novoAvatar,
+                        status: novoStatus,
+                        password: senhaFinal
+                    });
+
+                    currentUserData.name = novoNome;
+                    currentUserData.avatar = novoAvatar;
+                    currentUserData.status = novoStatus;
+                    currentUserData.password = senhaFinal;
+                }
 
                 atualizarUIPerfilProprio();
                 toggleEditProfileModal();
@@ -1082,7 +1168,7 @@
                         const fileName = msg.fileName || 'imagem.png';
                         contentHTML += `
                             <div class="relative group my-1">
-                                <img src="${msg.image}" onclick="abrirMidiaTelaCheia('image', '${msg.image}', event)" class="rounded-xl max-w-full max-h-60 object-cover border border-slate-200 cursor-pointer hover:opacity-95 transition" title="Clique para abrir em tela cheia">
+                                <img src="${msg.image}" class="rounded-xl max-w-full max-h-60 object-cover border border-slate-200">
                                 <a href="${msg.image}" download="${fileName}" title="Baixar Imagem" class="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-lg text-xs transition flex items-center gap-1">
                                     <i class="fas fa-download"></i> Baixar
                                 </a>
@@ -1093,7 +1179,7 @@
                         const fileName = msg.fileName || 'video.mp4';
                         contentHTML += `
                             <div class="relative group my-1">
-                                <video src="${msg.video}" onclick="abrirMidiaTelaCheia('video', '${msg.video}', event)" controls class="rounded-xl max-w-full max-h-60 border border-slate-200 cursor-pointer" title="Clique para abrir em tela cheia"></video>
+                                <video src="${msg.video}" controls class="rounded-xl max-w-full max-h-60 border border-slate-200"></video>
                                 <a href="${msg.video}" download="${fileName}" title="Baixar Vídeo" class="mt-1 inline-flex items-center gap-1.5 text-[11px] font-semibold ${isSent ? 'text-sky-100 hover:text-white' : 'text-sky-600 hover:text-sky-700'}">
                                     <i class="fas fa-download"></i> Baixar Vídeo
                                 </a>
@@ -1101,31 +1187,18 @@
                         `;
                     }
                     if (msg.audio) {
-                        const audioId = `audio_${msgId}`;
-                        let barrasHTML = '';
-                        const alturas = [4, 8, 12, 16, 10, 14, 18, 12, 8, 14, 16, 10, 6, 12, 18, 10, 6, 12, 8, 14, 10, 6, 12, 8];
-                        alturas.forEach(h => {
-                            barrasHTML += `<span class="w-[2px] rounded-full ${isSent ? 'bg-sky-200' : 'bg-slate-300'}" style="height: ${h}px;"></span>`;
-                        });
-
                         contentHTML += `
-                            <div class="my-1 flex items-center gap-3 min-w-[200px]">
-                                <audio id="${audioId}" src="${msg.audio}" ontimeupdate="atualizarProgressoAudio(this, '${audioId}')" onended="audioTerminou('${audioId}')"></audio>
-                                
-                                <button type="button" id="btn_${audioId}" onclick="togglePlayAudio(this, '${audioId}')" class="w-9 h-9 rounded-full ${isSent ? 'bg-white text-sky-600' : 'bg-sky-600 text-white'} flex items-center justify-center shadow transition flex-shrink-0">
-                                    <i class="fas fa-play text-xs"></i>
-                                </button>
+                            <div class="my-1">
+                                <audio src="${msg.audio}" controls class="w-full max-w-[240px] h-10"></audio>
+                            </div>
+                        `;
+                    }
 
-                                <div class="flex-grow flex flex-col gap-1">
-                                    <div class="flex items-center gap-1 h-6 relative overflow-hidden">
-                                        ${barrasHTML}
-                                        <div id="prog_${audioId}" class="absolute top-0 left-0 bottom-0 ${isSent ? 'bg-white/40' : 'bg-orange-500/30'} pointer-events-none" style="width: 0%;"></div>
-                                    </div>
-                                    <div class="flex justify-between items-center text-[10px] ${isSent ? 'text-sky-100' : 'text-slate-400'}">
-                                        <span id="dur_${audioId}">0:00</span>
-                                        <span>Áudio</span>
-                                    </div>
-                                </div>
+                    const horaMsg = formatarDataHora(msg.timestamp);
+                    if (horaMsg) {
+                        contentHTML += `
+                            <div class="text-[9px] mt-1 text-right ${isSent ? 'text-sky-100' : 'text-slate-400'}">
+                                ${horaMsg}
                             </div>
                         `;
                     }
