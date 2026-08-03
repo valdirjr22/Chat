@@ -59,7 +59,8 @@
         #incoming-call-modal,
         #active-call-modal,
         #edit-profile-modal,
-        #add-contact-modal {
+        #add-contact-modal,
+        #create-group-modal {
             box-sizing: border-box !important;
             padding-top: env(safe-area-inset-top, 0px) !important;
             padding-right: env(safe-area-inset-right, 0px) !important;
@@ -164,8 +165,9 @@
                         <p id="my-profile-status" class="text-[11px] text-slate-500 truncate max-w-[140px]">Disponível</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-3 text-slate-600 text-lg">
+                <div class="flex items-center gap-2.5 text-slate-600 text-base">
                     <button title="Editar Perfil" onclick="toggleEditProfileModal()" class="hover:text-sky-600 transition"><i class="fas fa-pen"></i></button>
+                    <button title="Criar Grupo" onclick="toggleCreateGroupModal()" class="hover:text-sky-500 transition"><i class="fas fa-users"></i></button>
                     <button title="Ativar Notificações" onclick="pedirPermissaoNotificacao()" class="hover:text-yellow-500 transition"><i class="fas fa-bell"></i></button>
                     <button title="Novo Contato" onclick="toggleAddContactModal()" class="hover:text-orange-500 transition"><i class="fas fa-user-plus"></i></button>
                     <button title="Sair" onclick="logout()" class="hover:text-red-500 transition"><i class="fas fa-power-off"></i></button>
@@ -194,7 +196,7 @@
             <div class="flex-grow overflow-y-auto bg-white">
                 <div id="tab-content-chats" class="divide-y divide-slate-100">
                     <div id="contacts-list"></div>
-                    <p id="contacts-empty" class="text-xs text-slate-400 text-center py-6 hidden">Nenhum contato ainda. Clique em <i class="fas fa-user-plus"></i> para adicionar.</p>
+                    <p id="contacts-empty" class="text-xs text-slate-400 text-center py-6 hidden">Nenhum contato ou grupo ainda. Clique em <i class="fas fa-user-plus"></i> ou <i class="fas fa-users"></i>.</p>
                 </div>
 
                 <div id="tab-content-status" class="p-4 hidden space-y-4">
@@ -226,7 +228,7 @@
                 </div>
                 <h1 class="text-3xl font-extrabold bg-gradient-to-r from-sky-500 to-orange-500 bg-clip-text text-transparent mb-2">What Chat Web</h1>
                 <p class="text-xs text-slate-500 max-w-md leading-relaxed">
-                    Selecione um contato na lista ao lado para abrir a guia de conversa.
+                    Selecione um contato ou grupo na lista ao lado para abrir a guia de conversa.
                 </p>
             </div>
 
@@ -242,14 +244,14 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-4 text-slate-600 text-lg pr-2">
+                    <div id="active-chat-actions" class="flex items-center gap-4 text-slate-600 text-lg pr-2">
                         <button title="Alternar Tela Cheia" onclick="toggleFullScreen()" class="hover:text-emerald-600 transition p-1">
                             <i class="fas fa-expand" id="fullscreen-icon"></i>
                         </button>
-                        <button title="Chamada de Voz" onclick="iniciarChamada(false)" class="hover:text-sky-600 transition p-1">
+                        <button id="btn-call-voice" title="Chamada de Voz" onclick="iniciarChamada(false)" class="hover:text-sky-600 transition p-1">
                             <i class="fas fa-phone"></i>
                         </button>
-                        <button title="Chamada de Vídeo" onclick="iniciarChamada(true)" class="hover:text-orange-500 transition p-1">
+                        <button id="btn-call-video" title="Chamada de Vídeo" onclick="iniciarChamada(true)" class="hover:text-orange-500 transition p-1">
                             <i class="fas fa-video"></i>
                         </button>
                     </div>
@@ -370,6 +372,27 @@
         </div>
     </div>
 
+    <div id="create-group-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4 text-slate-800">
+            <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                <i class="fas fa-users text-sky-500"></i> Criar Novo Grupo
+            </h3>
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Nome do Grupo</label>
+                <input type="text" id="group-name-input" placeholder="Ex: Família What Chat" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-orange-500">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Selecionar Participantes (Selecione ao menos um)</label>
+                <div id="group-contacts-selector" class="max-h-48 overflow-y-auto space-y-1.5 p-2 bg-slate-50 border border-slate-200 rounded-xl">
+                    </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="toggleCreateGroupModal()" class="px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-800 rounded-lg">Cancelar</button>
+                <button onclick="criarGrupo()" class="px-4 py-2 text-xs font-bold bg-sky-600 text-white rounded-lg shadow-blue-glow hover:bg-sky-500">Criar Grupo</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, arrayUnion, addDoc, query, orderBy, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -387,11 +410,14 @@
         const db = getFirestore(app);
 
         let currentUserData = null;
-        let activeContactUsername = null;
+        let activeChatId = null; // Pode ser chatId direto ou id do grupo
+        let activeContactUsername = null; // Caso seja chat privado
         let activeContactName = "Contato";
+        let isGroupChat = false;
         let unsubscribeMessages = null;
         let unsubscribeCalls = null;
         let contatosCache = [];
+        let gruposCache = [];
         let isFirstLoad = true;
 
         let myPeer = null;
@@ -499,7 +525,7 @@
         }
 
         window.iniciarChamada = async (isVideo) => {
-            if (!activeContactUsername) return;
+            if (isGroupChat || !activeContactUsername) return;
             isVideoCall = isVideo;
 
             try {
@@ -581,7 +607,7 @@
         };
 
         window.encerrarChamada = async () => {
-            if (activeContactUsername) {
+            if (activeContactUsername && !isGroupChat) {
                 await setDoc(doc(db, "calls", activeContactUsername), { status: 'ended' });
             }
             if (currentUserData) {
@@ -639,8 +665,7 @@
         window.apagarMensagem = async (msgId) => {
             if (!confirm("Tem certeza que deseja apagar esta mensagem?")) return;
             try {
-                const chatId = [currentUserData.username, activeContactUsername].sort().join('_');
-                await deleteDoc(doc(db, "chats", chatId, "messages", msgId));
+                await deleteDoc(doc(db, "chats", activeChatId, "messages", msgId));
             } catch (err) {
                 console.error(err);
                 alert("Erro ao apagar mensagem.");
@@ -649,22 +674,22 @@
 
         window.enviarArquivoMidia = async (e) => {
             const file = e.target.files[0];
-            if (!file || !activeContactUsername) return;
+            if (!file || !activeChatId) return;
 
             try {
                 const base64Data = await fileToBase64(file);
                 const isVideo = file.type.startsWith('video/');
                 const isImage = file.type.startsWith('image/');
                 const fileName = file.name || (isVideo ? 'video.mp4' : 'imagem.png');
-                const chatId = [currentUserData.username, activeContactUsername].sort().join('_');
                 
-                await addDoc(collection(db, "chats", chatId, "messages"), {
+                await addDoc(collection(db, "chats", activeChatId, "messages"), {
                     text: '',
                     image: isImage ? base64Data : null,
                     video: isVideo ? base64Data : null,
                     audio: null,
                     fileName: fileName,
                     sender: currentUserData.username,
+                    senderName: currentUserData.name,
                     timestamp: new Date()
                 });
 
@@ -685,7 +710,7 @@
         }
 
         window.toggleGravarAudio = async () => {
-            if (!activeContactUsername) return;
+            if (!activeChatId) return;
             if (!window.isSecureContext) {
                 alert("A gravação de áudio só funciona em conexões seguras (HTTPS) ou em 'localhost'.");
                 return;
@@ -717,16 +742,16 @@
                         const reader = new FileReader();
                         reader.onloadend = async () => {
                             const base64Audio = reader.result;
-                            const chatId = [currentUserData.username, activeContactUsername].sort().join('_');
 
                             try {
-                                await addDoc(collection(db, "chats", chatId, "messages"), {
+                                await addDoc(collection(db, "chats", activeChatId, "messages"), {
                                     text: '',
                                     image: null,
                                     video: null,
                                     audio: base64Audio,
                                     fileName: `audio_voz.${extensao}`,
                                     sender: currentUserData.username,
+                                    senderName: currentUserData.name,
                                     timestamp: new Date()
                                 });
                             } catch (err) {
@@ -764,7 +789,6 @@
             if (!audioEl) return;
 
             if (audioEl.paused) {
-                // Pausar outros áudios ativos na tela
                 document.querySelectorAll('audio').forEach(a => {
                     if (a !== audioEl) {
                         a.pause();
@@ -806,14 +830,14 @@
             }
         };
 
-        function dispararNotificacaoEVibracao(textoMensagem) {
+        function dispararNotificacaoEVibracao(textoMensagem, remetenteNome) {
             if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
             const body = document.getElementById('app-body');
             body.classList.add('vibrate-effect');
             setTimeout(() => body.classList.remove('vibrate-effect'), 500);
 
             if ("Notification" in window && Notification.permission === "granted") {
-                new Notification(`Nova mensagem de ${activeContactName}`, {
+                new Notification(`Nova mensagem de ${remetenteNome || activeContactName}`, {
                     body: textoMensagem || "Enviou uma mídia ou áudio",
                     icon: "https://cdn-icons-png.flaticon.com/512/732/732200.png"
                 });
@@ -845,7 +869,7 @@
                 if (existente.exists()) return alert("Esse usuário já existe.");
 
                 let avatarBase64 = avatarFile ? await fileToBase64(avatarFile) : '';
-                const newUser = { username, name: nome, avatar: avatarBase64, status: statusMsg, password: senha, contatos: [] };
+                const newUser = { username, name: nome, avatar: avatarBase64, status: statusMsg, password: senha, contatos: [], grupos: [] };
                 await setDoc(ref, newUser);
                 entrarComoUsuario(newUser);
             } catch (e) {
@@ -882,7 +906,7 @@
                 Notification.requestPermission();
             }
 
-            carregarContatos();
+            carregarContatosEGrupos();
             inicializarPeerJS();
         }
 
@@ -996,7 +1020,7 @@
                 await updateDoc(doc(db, "chatUsers", currentUserData.username), { contatos: arrayUnion(contatoInfo) });
 
                 contatosCache.push(contatoInfo);
-                renderContactsList();
+                renderConversasList();
                 toggleAddContactModal();
                 document.getElementById('new-contact-username').value = '';
             } catch (e) {
@@ -1005,35 +1029,135 @@
             }
         };
 
-        async function carregarContatos() {
+        window.toggleCreateGroupModal = () => {
+            const modal = document.getElementById('create-group-modal');
+            modal.classList.toggle('hidden');
+            if (!modal.classList.contains('hidden')) {
+                document.getElementById('group-name-input').value = '';
+                const container = document.getElementById('group-contacts-selector');
+                container.innerHTML = '';
+
+                if (contatosCache.length === 0) {
+                    container.innerHTML = `<p class="text-xs text-slate-400 p-2">Você precisa adicionar contatos primeiro.</p>`;
+                    return;
+                }
+
+                contatosCache.forEach(c => {
+                    const label = document.createElement('label');
+                    label.className = "flex items-center gap-2.5 p-1.5 hover:bg-slate-100 rounded-lg cursor-pointer text-xs text-slate-700";
+                    label.innerHTML = `
+                        <input type="checkbox" value="${c.username}" data-name="${c.name}" class="rounded border-slate-300 text-orange-500 focus:ring-orange-500">
+                        <span class="font-medium">${c.name}</span> <span class="text-slate-400 text-[10px]">(@${c.username})</span>
+                    `;
+                    container.appendChild(label);
+                });
+            }
+        };
+
+        window.criarGrupo = async () => {
+            const nomeGrupo = document.getElementById('group-name-input').value.trim();
+            if (!nomeGrupo) return alert("Digite o nome do grupo.");
+
+            const checkboxes = document.querySelectorAll('#group-contacts-selector input[type="checkbox"]:checked');
+            if (checkboxes.length === 0) return alert("Selecione ao menos um participante.");
+
+            const membros = [currentUserData.username];
+            const membrosNomes = [currentUserData.name];
+
+            checkboxes.forEach(cb => {
+                membros.push(cb.value);
+                membrosNomes.push(cb.getAttribute('data-name'));
+            });
+
+            const groupId = 'group_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+            const groupData = {
+                id: groupId,
+                name: nomeGrupo,
+                members: membros,
+                memberNames: membrosNomes,
+                admin: currentUserData.username,
+                createdAt: new Date()
+            };
+
+            try {
+                // Salva o documento principal do grupo
+                await setDoc(doc(db, "groups", groupId), groupData);
+
+                // Adiciona o grupo na lista de grupos salvos do usuário atual e de todos os membros selecionados
+                for (const membroUsername of membros) {
+                    const userRef = doc(db, "chatUsers", membroUsername);
+                    const userSnap = await getDoc(userRef);
+                    if (userSnap.exists()) {
+                        const gruposAtuais = userSnap.data().grupos || [];
+                        await updateDoc(userRef, { grupos: [...gruposAtuais, groupData] });
+                    }
+                }
+
+                toggleCreateGroupModal();
+                carregarContatosEGrupos();
+                alert("Grupo criado com sucesso!");
+            } catch (err) {
+                console.error(err);
+                alert("Erro ao criar o grupo.");
+            }
+        };
+
+        async function carregarContatosEGrupos() {
             try {
                 const snap = await getDoc(doc(db, "chatUsers", currentUserData.username));
-                contatosCache = (snap.exists() && Array.isArray(snap.data().contatos)) ? snap.data().contatos : [];
-                renderContactsList();
+                if (snap.exists()) {
+                    const data = snap.data();
+                    contatosCache = Array.isArray(data.contatos) ? data.contatos : [];
+                    gruposCache = Array.isArray(data.grupos) ? data.grupos : [];
+                }
+                renderConversasList();
             } catch (e) { console.error(e); }
         }
 
-        function renderContactsList(filtro = '') {
+        function renderConversasList(filtro = '') {
             const list = document.getElementById('contacts-list');
             const vazio = document.getElementById('contacts-empty');
             list.innerHTML = '';
 
-            const filtrados = contatosCache.filter(c => c.name.toLowerCase().includes(filtro.toLowerCase()) || c.username.toLowerCase().includes(filtro.toLowerCase()));
+            const contatosFiltrados = contatosCache.filter(c => c.name.toLowerCase().includes(filtro.toLowerCase()) || c.username.toLowerCase().includes(filtro.toLowerCase()));
+            const gruposFiltrados = gruposCache.filter(g => g.name.toLowerCase().includes(filtro.toLowerCase()));
 
-            if (filtrados.length === 0) {
+            if (contatosFiltrados.length === 0 && gruposFiltrados.length === 0) {
                 vazio.classList.remove('hidden');
                 return;
             }
             vazio.classList.add('hidden');
 
-            filtrados.forEach(user => {
+            // Renderizar Grupos primeiro
+            gruposFiltrados.forEach(grupo => {
+                const item = document.createElement('div');
+                item.className = "p-3 hover:bg-slate-50 cursor-pointer flex items-center gap-3 transition border-b border-slate-100";
+                item.onclick = () => window.selectGroup(grupo);
+
+                item.innerHTML = `
+                    <div class="w-11 h-11 bg-gradient-to-tr from-sky-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-blue-glow flex-shrink-0">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="flex-grow min-w-0">
+                        <div class="flex justify-between items-center">
+                            <h4 class="font-semibold text-slate-800 text-sm truncate">${grupo.name}</h4>
+                            <span class="text-[9px] text-sky-600 font-bold uppercase ml-2">Grupo</span>
+                        </div>
+                        <p class="text-xs text-slate-400 truncate">${grupo.memberNames.length} participantes</p>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+
+            // Renderizar Contatos Individuais
+            contatosFiltrados.forEach(user => {
                 const item = document.createElement('div');
                 item.className = "p-3 hover:bg-slate-50 cursor-pointer flex items-center gap-3 transition border-b border-slate-100";
                 item.onclick = () => window.selectContact(user);
 
                 const avatarHTML = user.avatar
-                    ? `<img src="${user.avatar}" class="w-11 h-11 rounded-xl object-cover shadow-blue-glow">`
-                    : `<div class="w-11 h-11 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-blue-glow">${user.name.charAt(0).toUpperCase()}</div>`;
+                    ? `<img src="${user.avatar}" class="w-11 h-11 rounded-xl object-cover shadow-blue-glow flex-shrink-0">`
+                    : `<div class="w-11 h-11 bg-sky-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-blue-glow flex-shrink-0">${user.name.charAt(0).toUpperCase()}</div>`;
 
                 item.innerHTML = `
                     ${avatarHTML}
@@ -1049,17 +1173,23 @@
             });
         }
 
-        window.filterContacts = () => { renderContactsList(document.getElementById('search-input').value); };
+        window.filterContacts = () => { renderConversasList(document.getElementById('search-input').value); };
 
         window.selectContact = async (user) => {
             activeContactUsername = user.username;
             activeContactName = user.name;
+            isGroupChat = false;
+            activeChatId = [currentUserData.username, activeContactUsername].sort().join('_');
             isFirstLoad = true;
             
             document.getElementById('welcome-view').classList.add('hidden');
             const activeView = document.getElementById('active-chat-view');
             activeView.classList.remove('hidden');
             activeView.classList.add('flex');
+
+            // Mostrar botões de chamada em chats privados
+            document.getElementById('btn-call-voice').classList.remove('hidden');
+            document.getElementById('btn-call-video').classList.remove('hidden');
 
             let freshUser = user;
             try {
@@ -1080,11 +1210,35 @@
             listenToMessages();
         };
 
+        window.selectGroup = (grupo) => {
+            activeChatId = grupo.id;
+            activeContactName = grupo.name;
+            isGroupChat = true;
+            activeContactUsername = null;
+            isFirstLoad = true;
+
+            document.getElementById('welcome-view').classList.add('hidden');
+            const activeView = document.getElementById('active-chat-view');
+            activeView.classList.remove('hidden');
+            activeView.classList.add('flex');
+
+            // Ocultar botões de chamada privada para grupos
+            document.getElementById('btn-call-voice').classList.add('hidden');
+            document.getElementById('btn-call-video').classList.add('hidden');
+
+            document.getElementById('active-contact-name').textContent = grupo.name;
+            document.getElementById('active-contact-status').textContent = `${grupo.memberNames.length} membros`;
+
+            const activeAvatarBox = document.getElementById('active-contact-avatar-box');
+            activeAvatarBox.innerHTML = `<i class="fas fa-users text-white"></i>`;
+
+            listenToMessages();
+        };
+
         function listenToMessages() {
             if (unsubscribeMessages) unsubscribeMessages();
 
-            const chatId = [currentUserData.username, activeContactUsername].sort().join('_');
-            const q = query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "asc"));
+            const q = query(collection(db, "chats", activeChatId, "messages"), orderBy("timestamp", "asc"));
             const container = document.getElementById('messages-container');
             container.innerHTML = '';
 
@@ -1104,6 +1258,10 @@
                     }`;
 
                     let contentHTML = '';
+                    if (isGroupChat && !isSent && msg.senderName) {
+                        contentHTML += `<div class="font-bold text-[10px] text-orange-400 mb-0.5">${msg.senderName}</div>`;
+                    }
+
                     if (msg.text) {
                         contentHTML += `<div class="pr-6">${msg.text}</div>`;
                     }
@@ -1131,7 +1289,6 @@
                     }
                     if (msg.audio) {
                         const audioUniqueId = `audio_el_${msgId}`;
-                        // Gerador de barras estéticas de pulso sonoro fixas para simular onda
                         const alturasBarras = [35, 60, 25, 80, 45, 90, 30, 70, 50, 100, 40, 65, 30, 85, 45, 60, 25, 75];
                         let barrasHTML = alturasBarras.map(h => `<span class="w-1 bg-current rounded-full transition-all duration-200" style="height: ${h}%; opacity: 0.8;"></span>`).join('');
 
@@ -1172,7 +1329,7 @@
                         if (change.type === "added") {
                             const msgNova = change.doc.data();
                             if (msgNova.sender !== currentUserData.username) {
-                                dispararNotificacaoEVibracao(msgNova.text);
+                                dispararNotificacaoEVibracao(msgNova.text, msgNova.senderName);
                             }
                         }
                     });
@@ -1187,15 +1344,15 @@
             e.preventDefault();
             const input = document.getElementById('message-input');
             const text = input.value.trim();
-            if (!text || !activeContactUsername) return;
+            if (!text || !activeChatId) return;
 
-            const chatId = [currentUserData.username, activeContactUsername].sort().join('_');
-            await addDoc(collection(db, "chats", chatId, "messages"), {
+            await addDoc(collection(db, "chats", activeChatId, "messages"), {
                 text: text,
                 image: null,
                 video: null,
                 audio: null,
                 sender: currentUserData.username,
+                senderName: currentUserData.name,
                 timestamp: new Date()
             });
 
