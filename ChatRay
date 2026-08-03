@@ -1,4 +1,4 @@
-<html lang="pt-BR" class="w-full h-full m-0 p-0">
+<html lang="pt-BR" class="w-full h-full m-0 p-0 overflow-hidden">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -9,12 +9,12 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         html, body {
-            width: 100vw;
-            min-height: 100vh;
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
-            overflow-y: auto;
+            width: 100vw !important;
+            height: 100vh !important;
+            height: 100dvh !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
             font-family: 'Inter', sans-serif;
         }
 
@@ -74,7 +74,7 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body id="app-body" class="bg-slate-100 w-full min-h-screen m-0 p-0 flex items-center justify-center">
+<body id="app-body" class="bg-slate-100 w-full h-full m-0 p-0 flex items-center justify-center overflow-hidden">
 
     <div id="loading-screen" class="fixed inset-0 bg-white flex items-center justify-center z-[100]">
         <div class="text-slate-600 text-sm flex items-center gap-2">
@@ -152,7 +152,7 @@
         </div>
     </div>
 
-    <div id="chat-screen" class="bg-white w-full h-[90vh] max-w-6xl mx-auto rounded-2xl shadow-xl flex overflow-hidden hidden my-auto border border-slate-200">
+    <div id="chat-screen" class="bg-white w-full h-full max-w-none md:max-w-6xl md:h-[90vh] md:rounded-2xl shadow-none md:shadow-xl flex overflow-hidden hidden m-0 md:my-auto border-0 md:border border-slate-200">
 
         <div class="w-80 md:w-[350px] lg:w-[380px] bg-white border-r border-slate-200 flex flex-col h-full flex-shrink-0">
             <div class="bg-slate-50 p-3.5 flex justify-between items-center border-b border-slate-200">
@@ -404,9 +404,7 @@
             return (u || '').trim().toLowerCase().replace(/\s+/g, '');
         }
 
-        // Funções corrigidas para abrir/fechar mídia sem eco/dois áudios
         window.abrirMidiaTelaCheia = (tipo, src, event) => {
-            // Se foi clicado diretamente no vídeo do chat, silencia/pausa ele para evitar áudio duplicado
             if (event && event.target && event.target.tagName === 'VIDEO') {
                 event.target.pause();
             }
@@ -426,7 +424,7 @@
         window.fecharMidiaTelaCheia = () => {
             const modal = document.getElementById('media-modal');
             const contentContainer = document.getElementById('media-modal-content');
-            contentContainer.innerHTML = ''; // Destrói o elemento de vídeo do modal, parando o áudio imediatamente
+            contentContainer.innerHTML = '';
             modal.classList.add('hidden');
         };
 
@@ -435,6 +433,70 @@
                 fecharMidiaTelaCheia();
             }
         });
+
+        window.togglePlayAudio = (btnEl, audioId) => {
+            const audio = document.getElementById(audioId);
+            const icon = btnEl.querySelector('i');
+            
+            document.querySelectorAll('audio').forEach(el => {
+                if (el !== audio) {
+                    el.pause();
+                    el.currentTime = 0;
+                    const otherBtn = document.getElementById(`btn_${el.id}`);
+                    if (otherBtn) {
+                        const otherIcon = otherBtn.querySelector('i');
+                        if (otherIcon) {
+                            otherIcon.className = "fas fa-play text-xs";
+                        }
+                    }
+                }
+            });
+
+            if (audio.paused) {
+                audio.play();
+                icon.className = "fas fa-pause text-xs";
+            } else {
+                audio.pause();
+                icon.className = "fas fa-play text-xs";
+            }
+        };
+
+        window.atualizarProgressoAudio = (audioEl, audioId) => {
+            const durationEl = document.getElementById(`dur_${audioId}`);
+            const progressBar = document.getElementById(`prog_${audioId}`);
+            
+            if (audioEl.duration) {
+                const atual = audioEl.currentTime;
+                const total = audioEl.duration;
+                
+                durationEl.textContent = formatarTempo(atual);
+
+                const porcentagem = (atual / total) * 100;
+                if (progressBar) progressBar.style.width = `${porcentagem}%`;
+            }
+        };
+
+        window.audioTerminou = (audioId) => {
+            const btn = document.getElementById(`btn_${audioId}`);
+            if (btn) {
+                const icon = btn.querySelector('i');
+                if (icon) icon.className = "fas fa-play text-xs";
+            }
+            const durationEl = document.getElementById(`dur_${audioId}`);
+            const audio = document.getElementById(audioId);
+            if (durationEl && audio) {
+                durationEl.textContent = formatarTempo(audio.duration || 0);
+            }
+            const progressBar = document.getElementById(`prog_${audioId}`);
+            if (progressBar) progressBar.style.width = '0%';
+        };
+
+        function formatarTempo(segundos) {
+            if (isNaN(segundos)) return "0:00";
+            const min = Math.floor(segundos / 60);
+            const seg = Math.floor(segundos % 60);
+            return `${min}:${seg < 10 ? '0' : ''}${seg}`;
+        }
 
         function inicializarPeerJS() {
             if (!currentUserData || myPeer) return;
@@ -1039,9 +1101,31 @@
                         `;
                     }
                     if (msg.audio) {
+                        const audioId = `audio_${msgId}`;
+                        let barrasHTML = '';
+                        const alturas = [4, 8, 12, 16, 10, 14, 18, 12, 8, 14, 16, 10, 6, 12, 18, 10, 6, 12, 8, 14, 10, 6, 12, 8];
+                        alturas.forEach(h => {
+                            barrasHTML += `<span class="w-[2px] rounded-full ${isSent ? 'bg-sky-200' : 'bg-slate-300'}" style="height: ${h}px;"></span>`;
+                        });
+
                         contentHTML += `
-                            <div class="my-1">
-                                <audio src="${msg.audio}" controls class="w-full max-w-[240px] h-10"></audio>
+                            <div class="my-1 flex items-center gap-3 min-w-[200px]">
+                                <audio id="${audioId}" src="${msg.audio}" ontimeupdate="atualizarProgressoAudio(this, '${audioId}')" onended="audioTerminou('${audioId}')"></audio>
+                                
+                                <button type="button" id="btn_${audioId}" onclick="togglePlayAudio(this, '${audioId}')" class="w-9 h-9 rounded-full ${isSent ? 'bg-white text-sky-600' : 'bg-sky-600 text-white'} flex items-center justify-center shadow transition flex-shrink-0">
+                                    <i class="fas fa-play text-xs"></i>
+                                </button>
+
+                                <div class="flex-grow flex flex-col gap-1">
+                                    <div class="flex items-center gap-1 h-6 relative overflow-hidden">
+                                        ${barrasHTML}
+                                        <div id="prog_${audioId}" class="absolute top-0 left-0 bottom-0 ${isSent ? 'bg-white/40' : 'bg-orange-500/30'} pointer-events-none" style="width: 0%;"></div>
+                                    </div>
+                                    <div class="flex justify-between items-center text-[10px] ${isSent ? 'text-sky-100' : 'text-slate-400'}">
+                                        <span id="dur_${audioId}">0:00</span>
+                                        <span>Áudio</span>
+                                    </div>
+                                </div>
                             </div>
                         `;
                     }
