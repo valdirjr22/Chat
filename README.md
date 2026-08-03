@@ -151,7 +151,7 @@
         </div>
     </div>
 
-    <div id="chat-screen" class="bg-white w-full h-[90vh] max-w-6xl mx-auto rounded-2xl shadow-xl flex overflow-hidden hidden my-auto border border-slate-200">
+    <div id="chat-screen" class="fixed inset-0 bg-white w-full h-full flex overflow-hidden hidden z-40">
 
         <div class="w-80 md:w-[350px] lg:w-[380px] bg-white border-r border-slate-200 flex flex-col h-full flex-shrink-0">
             <div class="bg-slate-50 p-3.5 flex justify-between items-center border-b border-slate-200">
@@ -333,6 +333,16 @@
             <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Recado / Mensagem de Perfil</label>
                 <input type="text" id="edit-status-input" placeholder="Ex: Disponível no What Chat!" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-orange-500">
+            </div>
+            <hr class="border-slate-200">
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Usuário (@)</label>
+                <input type="text" id="edit-username-input" placeholder="Ex: lucas.silva" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-orange-500">
+                <p class="text-[10px] text-slate-400 mt-1">Atenção: alterar o usuário muda o seu @ de acesso. Suas conversas atuais continuarão salvas com o usuário antigo.</p>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Nova Senha (deixe em branco para não alterar)</label>
+                <input type="password" id="edit-password-input" placeholder="••••••••" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-orange-500">
             </div>
             <div class="flex justify-end gap-2 pt-2">
                 <button onclick="toggleEditProfileModal()" class="px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-800 rounded-lg">Cancelar</button>
@@ -552,6 +562,30 @@
             document.getElementById('local-video').srcObject = null;
         }
 
+        function formatarDataHora(timestamp) {
+            if (!timestamp) return '';
+            let data;
+            if (typeof timestamp.toDate === 'function') {
+                data = timestamp.toDate();
+            } else if (timestamp instanceof Date) {
+                data = timestamp;
+            } else {
+                data = new Date(timestamp);
+            }
+            if (isNaN(data.getTime())) return '';
+
+            const hoje = new Date();
+            const ehHoje = data.toDateString() === hoje.toDateString();
+
+            const hora = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+            if (ehHoje) {
+                return hora;
+            }
+            const dataFormatada = data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+            return `${dataFormatada} ${hora}`;
+        }
+
         function fileToBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -603,27 +637,91 @@
         };
 
         // Função para gravar e enviar mensagem de voz
+        function getMimeTypeSuportado() {
+            const candidatos = [
+                'audio/webm;codecs=opus',
+                'audio/webm',
+                'audio/mp4',
+                'audio/ogg;codecs=opus',
+                'audio/ogg'
+            ];
+            if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) {
+                return '';
+            }
+            for (const tipo of candidatos) {
+                if (MediaRecorder.isTypeSupported(tipo)) return tipo;
+            }
+            return '';
+        }
+
         window.toggleGravarAudio = async () => {
             if (!activeContactUsername) return;
+
+            if (!window.isSecureContext) {
+                alert("A gravação de áudio só funciona em conexões seguras (HTTPS) ou em 'localhost'. Verifique o endereço que você está usando para acessar o What Chat.");
+                return;
+            }
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert("Seu navegador não tem suporte para gravação de áudio.");
+                return;
+            }
+
+            if (typeof MediaRecorder === 'undefined') {
+                alert("Seu navegador não tem suporte à gravação de mensagens de voz (MediaRecorder).");
+                return;
+            }
+
             const icon = document.getElementById('voice-icon');
             const btn = document.getElementById('voice-record-btn');
 
             if (!isRecording) {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream);
+                    const mimeType = getMimeTypeSuportado();
+
+                    mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
                     audioChunks = [];
 
                     mediaRecorder.ondataavailable = (event) => {
-                        if (event.data.size > 0) {
+                        if (event.data && event.data.size > 0) {
                             audioChunks.push(event.data);
                         }
                     };
 
+                    mediaRecorder.onerror = (event) => {
+                        console.error("Erro no MediaRecorder:", event.error);
+                        alert("Ocorreu um erro durante a gravação do áudio.");
+                        stream.getTracks().forEach(track => track.stop());
+                        isRecording = false;
+                        icon.classList.remove('fa-stop', 'text-red-500', 'animate-pulse');
+                        icon.classList.add('fa-microphone');
+                        btn.title = "Gravar Mensagem de Voz";
+                    };
+
                     mediaRecorder.onstop = async () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        stream.getTracks().forEach(track => track.stop());
+
+                        if (audioChunks.length === 0) {
+                            alert("Nenhum áudio foi capturado. Tente gravar novamente falando por mais tempo.");
+                            return;
+                        }
+
+                        const tipoFinal = mediaRecorder.mimeType || 'audio/webm';
+                        const audioBlob = new Blob(audioChunks, { type: tipoFinal });
+
+                        if (audioBlob.size === 0) {
+                            alert("O áudio gravado ficou vazio. Verifique o microfone e tente novamente.");
+                            return;
+                        }
+
+                        const extensao = tipoFinal.includes('mp4') ? 'm4a' : (tipoFinal.includes('ogg') ? 'ogg' : 'webm');
+
                         const reader = new FileReader();
-                        reader.readAsDataURL(audioBlob);
+                        reader.onerror = () => {
+                            console.error(reader.error);
+                            alert("Erro ao processar o áudio gravado.");
+                        };
                         reader.onloadend = async () => {
                             const base64Audio = reader.result;
                             const chatId = [currentUserData.username, activeContactUsername].sort().join('_');
@@ -634,17 +732,16 @@
                                     image: null,
                                     video: null,
                                     audio: base64Audio,
-                                    fileName: 'audio_voz.webm',
+                                    fileName: `audio_voz.${extensao}`,
                                     sender: currentUserData.username,
                                     timestamp: new Date()
                                 });
                             } catch (err) {
                                 console.error(err);
-                                alert("Erro ao enviar mensagem de voz.");
+                                alert("Erro ao enviar mensagem de voz. Verifique sua conexão e tente novamente.");
                             }
                         };
-
-                        stream.getTracks().forEach(track => track.stop());
+                        reader.readAsDataURL(audioBlob);
                     };
 
                     mediaRecorder.start();
@@ -654,10 +751,18 @@
                     btn.title = "Parar e Enviar Áudio";
                 } catch (err) {
                     console.error(err);
-                    alert("Não foi possível acessar o microfone.");
+                    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                        alert("Permissão para o microfone negada. Verifique as permissões do navegador/site para o What Chat.");
+                    } else if (err.name === 'NotFoundError') {
+                        alert("Nenhum microfone foi encontrado neste dispositivo.");
+                    } else {
+                        alert("Não foi possível acessar o microfone.");
+                    }
                 }
             } else {
-                mediaRecorder.stop();
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                    mediaRecorder.stop();
+                }
                 isRecording = false;
                 icon.classList.remove('fa-stop', 'text-red-500', 'animate-pulse');
                 icon.classList.add('fa-microphone');
@@ -782,6 +887,8 @@
                 document.getElementById('edit-name-input').value = currentUserData.name || '';
                 document.getElementById('edit-status-input').value = currentUserData.status || '';
                 document.getElementById('edit-avatar-file').value = '';
+                document.getElementById('edit-username-input').value = currentUserData.username || '';
+                document.getElementById('edit-password-input').value = '';
             }
         };
 
@@ -789,8 +896,11 @@
             const novoNome = document.getElementById('edit-name-input').value.trim();
             const avatarFile = document.getElementById('edit-avatar-file').files[0];
             const novoStatus = document.getElementById('edit-status-input').value.trim();
+            const novoUsername = normalizarUsuario(document.getElementById('edit-username-input').value);
+            const novaSenha = document.getElementById('edit-password-input').value;
 
             if (!novoNome) return alert("O nome não pode estar vazio.");
+            if (!novoUsername) return alert("O usuário não pode estar vazio.");
 
             try {
                 let novoAvatar = currentUserData.avatar || '';
@@ -798,16 +908,49 @@
                     novoAvatar = await fileToBase64(avatarFile);
                 }
 
-                const userRef = doc(db, "chatUsers", currentUserData.username);
-                await updateDoc(userRef, {
-                    name: novoNome,
-                    avatar: novoAvatar,
-                    status: novoStatus
-                });
+                const senhaFinal = novaSenha ? novaSenha : currentUserData.password;
+                const usernameAntigo = currentUserData.username;
+                const usernameMudou = novoUsername !== usernameAntigo;
 
-                currentUserData.name = novoNome;
-                currentUserData.avatar = novoAvatar;
-                currentUserData.status = novoStatus;
+                if (usernameMudou) {
+                    // Verifica se o novo usuário já existe
+                    const existente = await getDoc(doc(db, "chatUsers", novoUsername));
+                    if (existente.exists()) {
+                        return alert("Esse nome de usuário já está em uso. Escolha outro.");
+                    }
+
+                    // Cria o novo documento de usuário com os dados atualizados
+                    const novoUserData = {
+                        ...currentUserData,
+                        username: novoUsername,
+                        name: novoNome,
+                        avatar: novoAvatar,
+                        status: novoStatus,
+                        password: senhaFinal
+                    };
+                    await setDoc(doc(db, "chatUsers", novoUsername), novoUserData);
+
+                    // Remove o documento antigo
+                    await deleteDoc(doc(db, "chatUsers", usernameAntigo));
+
+                    currentUserData = novoUserData;
+                    localStorage.setItem('whatchat_username', novoUsername);
+
+                    alert("Usuário alterado com sucesso! Observação: conversas anteriores ficaram associadas ao usuário antigo e podem não aparecer mais.");
+                } else {
+                    const userRef = doc(db, "chatUsers", currentUserData.username);
+                    await updateDoc(userRef, {
+                        name: novoNome,
+                        avatar: novoAvatar,
+                        status: novoStatus,
+                        password: senhaFinal
+                    });
+
+                    currentUserData.name = novoNome;
+                    currentUserData.avatar = novoAvatar;
+                    currentUserData.status = novoStatus;
+                    currentUserData.password = senhaFinal;
+                }
 
                 atualizarUIPerfilProprio();
                 toggleEditProfileModal();
@@ -1003,6 +1146,15 @@
                         contentHTML += `
                             <div class="my-1">
                                 <audio src="${msg.audio}" controls class="w-full max-w-[240px] h-10"></audio>
+                            </div>
+                        `;
+                    }
+
+                    const horaMsg = formatarDataHora(msg.timestamp);
+                    if (horaMsg) {
+                        contentHTML += `
+                            <div class="text-[9px] mt-1 text-right ${isSent ? 'text-sky-100' : 'text-slate-400'}">
+                                ${horaMsg}
                             </div>
                         `;
                     }
