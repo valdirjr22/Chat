@@ -400,12 +400,11 @@
         let activeCallSignalData = null;
         let isVideoCall = true;
 
-        // Variáveis para gravação de áudio
         let mediaRecorder = null;
         let audioChunks = [];
         let isRecording = false;
 
-        // Função para alternar modo Tela Cheia (Fullscreen API)
+        // Função de Tela Cheia
         window.toggleFullScreen = () => {
             const docElement = document.documentElement;
             const icon = document.getElementById('fullscreen-icon');
@@ -437,7 +436,6 @@
             }
         };
 
-        // Sincroniza o ícone caso o usuário saia da tela cheia via tecla ESC
         document.addEventListener('fullscreenchange', () => {
             const icon = document.getElementById('fullscreen-icon');
             if (!icon) return;
@@ -543,7 +541,6 @@
 
         window.atenderChamada = async () => {
             if (!activeCallSignalData) return;
-
             document.getElementById('incoming-call-modal').classList.add('hidden');
 
             try {
@@ -624,14 +621,10 @@
 
             const hoje = new Date();
             const ehHoje = data.toDateString() === hoje.toDateString();
-
             const hora = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-            if (ehHoje) {
-                return hora;
-            }
-            const dataFormatada = data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
-            return `${dataFormatada} ${hora}`;
+            if (ehHoje) return hora;
+            return `${data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })} ${hora}`;
         }
 
         function fileToBase64(file) {
@@ -645,7 +638,6 @@
 
         window.apagarMensagem = async (msgId) => {
             if (!confirm("Tem certeza que deseja apagar esta mensagem?")) return;
-
             try {
                 const chatId = [currentUserData.username, activeContactUsername].sort().join('_');
                 await deleteDoc(doc(db, "chats", chatId, "messages", msgId));
@@ -664,7 +656,6 @@
                 const isVideo = file.type.startsWith('video/');
                 const isImage = file.type.startsWith('image/');
                 const fileName = file.name || (isVideo ? 'video.mp4' : 'imagem.png');
-
                 const chatId = [currentUserData.username, activeContactUsername].sort().join('_');
                 
                 await addDoc(collection(db, "chats", chatId, "messages"), {
@@ -684,18 +675,9 @@
             }
         };
 
-        // Função para gravar e enviar mensagem de voz
         function getMimeTypeSuportado() {
-            const candidatos = [
-                'audio/webm;codecs=opus',
-                'audio/webm',
-                'audio/mp4',
-                'audio/ogg;codecs=opus',
-                'audio/ogg'
-            ];
-            if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) {
-                return '';
-            }
+            const candidatos = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus', 'audio/ogg'];
+            if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return '';
             for (const tipo of candidatos) {
                 if (MediaRecorder.isTypeSupported(tipo)) return tipo;
             }
@@ -704,19 +686,8 @@
 
         window.toggleGravarAudio = async () => {
             if (!activeContactUsername) return;
-
             if (!window.isSecureContext) {
-                alert("A gravação de áudio só funciona em conexões seguras (HTTPS) ou em 'localhost'. Verifique o endereço que você está usando para acessar o What Chat.");
-                return;
-            }
-
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                alert("Seu navegador não tem suporte para gravação de áudio.");
-                return;
-            }
-
-            if (typeof MediaRecorder === 'undefined') {
-                alert("Seu navegador não tem suporte à gravação de mensagens de voz (MediaRecorder).");
+                alert("A gravação de áudio só funciona em conexões seguras (HTTPS) ou em 'localhost'.");
                 return;
             }
 
@@ -732,44 +703,18 @@
                     audioChunks = [];
 
                     mediaRecorder.ondataavailable = (event) => {
-                        if (event.data && event.data.size > 0) {
-                            audioChunks.push(event.data);
-                        }
-                    };
-
-                    mediaRecorder.onerror = (event) => {
-                        console.error("Erro no MediaRecorder:", event.error);
-                        alert("Ocorreu um erro durante a gravação do áudio.");
-                        stream.getTracks().forEach(track => track.stop());
-                        isRecording = false;
-                        icon.classList.remove('fa-stop', 'text-red-500', 'animate-pulse');
-                        icon.classList.add('fa-microphone');
-                        btn.title = "Gravar Mensagem de Voz";
+                        if (event.data && event.data.size > 0) audioChunks.push(event.data);
                     };
 
                     mediaRecorder.onstop = async () => {
                         stream.getTracks().forEach(track => track.stop());
-
-                        if (audioChunks.length === 0) {
-                            alert("Nenhum áudio foi capturado. Tente gravar novamente falando por mais tempo.");
-                            return;
-                        }
+                        if (audioChunks.length === 0) return alert("Nenhum áudio capturado.");
 
                         const tipoFinal = mediaRecorder.mimeType || 'audio/webm';
                         const audioBlob = new Blob(audioChunks, { type: tipoFinal });
-
-                        if (audioBlob.size === 0) {
-                            alert("O áudio gravado ficou vazio. Verifique o microfone e tente novamente.");
-                            return;
-                        }
-
                         const extensao = tipoFinal.includes('mp4') ? 'm4a' : (tipoFinal.includes('ogg') ? 'ogg' : 'webm');
 
                         const reader = new FileReader();
-                        reader.onerror = () => {
-                            console.error(reader.error);
-                            alert("Erro ao processar o áudio gravado.");
-                        };
                         reader.onloadend = async () => {
                             const base64Audio = reader.result;
                             const chatId = [currentUserData.username, activeContactUsername].sort().join('_');
@@ -786,7 +731,7 @@
                                 });
                             } catch (err) {
                                 console.error(err);
-                                alert("Erro ao enviar mensagem de voz. Verifique sua conexão e tente novamente.");
+                                alert("Erro ao enviar mensagem de voz.");
                             }
                         };
                         reader.readAsDataURL(audioBlob);
@@ -799,18 +744,10 @@
                     btn.title = "Parar e Enviar Áudio";
                 } catch (err) {
                     console.error(err);
-                    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                        alert("Permissão para o microfone negada. Verifique as permissões do navegador/site para o What Chat.");
-                    } else if (err.name === 'NotFoundError') {
-                        alert("Nenhum microfone foi encontrado neste dispositivo.");
-                    } else {
-                        alert("Não foi possível acessar o microfone.");
-                    }
+                    alert("Não foi possível acessar o microfone.");
                 }
             } else {
-                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                    mediaRecorder.stop();
-                }
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
                 isRecording = false;
                 icon.classList.remove('fa-stop', 'text-red-500', 'animate-pulse');
                 icon.classList.add('fa-microphone');
@@ -818,19 +755,59 @@
             }
         };
 
+        // Função de Controle customizado do Pulso Sonoro do Áudio
+        window.togglePlayAudio = (btnElement, audioId) => {
+            const audioEl = document.getElementById(audioId);
+            const playIcon = btnElement.querySelector('.play-icon');
+            const waveContainer = btnElement.nextElementSibling;
+
+            if (!audioEl) return;
+
+            if (audioEl.paused) {
+                // Pausar outros áudios ativos na tela
+                document.querySelectorAll('audio').forEach(a => {
+                    if (a !== audioEl) {
+                        a.pause();
+                        a.currentTime = 0;
+                    }
+                });
+                document.querySelectorAll('.audio-play-btn').forEach(b => {
+                    const icon = b.querySelector('.play-icon');
+                    if (icon) {
+                        icon.classList.remove('fa-pause');
+                        icon.classList.add('fa-play');
+                    }
+                });
+
+                audioEl.play().then(() => {
+                    playIcon.classList.remove('fa-play');
+                    playIcon.classList.add('fa-pause');
+                    if (waveContainer) waveContainer.classList.add('animate-pulse');
+                }).catch(err => console.log(err));
+            } else {
+                audioEl.pause();
+                playIcon.classList.remove('fa-pause');
+                playIcon.classList.add('fa-play');
+                if (waveContainer) waveContainer.classList.remove('animate-pulse');
+            }
+
+            audioEl.onended = () => {
+                playIcon.classList.remove('fa-pause');
+                playIcon.classList.add('fa-play');
+                if (waveContainer) waveContainer.classList.remove('animate-pulse');
+            };
+        };
+
         window.pedirPermissaoNotificacao = () => {
             if ("Notification" in window) {
                 Notification.requestPermission().then(permission => {
                     if (permission === "granted") alert("Notificações ativadas com sucesso!");
                 });
-            } else {
-                alert("Seu navegador não suporta notificações.");
             }
         };
 
         function dispararNotificacaoEVibracao(textoMensagem) {
             if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
-            
             const body = document.getElementById('app-body');
             body.classList.add('vibrate-effect');
             setTimeout(() => body.classList.remove('vibrate-effect'), 500);
@@ -867,11 +844,7 @@
                 const existente = await getDoc(ref);
                 if (existente.exists()) return alert("Esse usuário já existe.");
 
-                let avatarBase64 = '';
-                if (avatarFile) {
-                    avatarBase64 = await fileToBase64(avatarFile);
-                }
-
+                let avatarBase64 = avatarFile ? await fileToBase64(avatarFile) : '';
                 const newUser = { username, name: nome, avatar: avatarBase64, status: statusMsg, password: senha, contatos: [] };
                 await setDoc(ref, newUser);
                 entrarComoUsuario(newUser);
@@ -889,9 +862,7 @@
 
             try {
                 const snap = await getDoc(doc(db, "chatUsers", username));
-                if (!snap.exists() || snap.data().password !== senha) {
-                    return alert("Usuário ou senha incorretos.");
-                }
+                if (!snap.exists() || snap.data().password !== senha) return alert("Usuário ou senha incorretos.");
                 entrarComoUsuario(snap.data());
             } catch (e) {
                 console.error(e);
@@ -902,7 +873,6 @@
         function entrarComoUsuario(userData) {
             currentUserData = userData;
             localStorage.setItem('whatchat_username', userData.username);
-
             atualizarUIPerfilProprio();
 
             document.getElementById('auth-screen').classList.add('hidden');
@@ -922,7 +892,7 @@
 
             const avatarBox = document.getElementById('my-profile-avatar-box');
             if (currentUserData.avatar) {
-                avatarBox.innerHTML = `<img src="${currentUserData.avatar}" class="w-full h-full object-cover rounded-xl" onerror="this.src=''; this.parentElement.innerHTML='<span id=\'user-avatar-initial\'>${currentUserData.name.charAt(0).toUpperCase()}</span>'">`;
+                avatarBox.innerHTML = `<img src="${currentUserData.avatar}" class="w-full h-full object-cover rounded-xl">`;
             } else {
                 avatarBox.innerHTML = `<span id="user-avatar-initial">${currentUserData.name.charAt(0).toUpperCase()}</span>`;
             }
@@ -947,49 +917,27 @@
             const novoUsername = normalizarUsuario(document.getElementById('edit-username-input').value);
             const novaSenha = document.getElementById('edit-password-input').value;
 
-            if (!novoNome) return alert("O nome não pode estar vazio.");
-            if (!novoUsername) return alert("O usuário não pode estar vazio.");
+            if (!novoNome || !novoUsername) return alert("Nome e usuário são obrigatórios.");
 
             try {
                 let novoAvatar = currentUserData.avatar || '';
-                if (avatarFile) {
-                    novoAvatar = await fileToBase64(avatarFile);
-                }
+                if (avatarFile) novoAvatar = await fileToBase64(avatarFile);
 
                 const senhaFinal = novaSenha ? novaSenha : currentUserData.password;
                 const usernameAntigo = currentUserData.username;
-                const usernameMudou = novoUsername !== usernameAntigo;
 
-                if (usernameMudou) {
+                if (novoUsername !== usernameAntigo) {
                     const existente = await getDoc(doc(db, "chatUsers", novoUsername));
-                    if (existente.exists()) {
-                        return alert("Esse nome de usuário já está em uso. Escolha outro.");
-                    }
+                    if (existente.exists()) return alert("Esse nome de usuário já está em uso.");
 
-                    const novoUserData = {
-                        ...currentUserData,
-                        username: novoUsername,
-                        name: novoNome,
-                        avatar: novoAvatar,
-                        status: novoStatus,
-                        password: senhaFinal
-                    };
+                    const novoUserData = { ...currentUserData, username: novoUsername, name: novoNome, avatar: novoAvatar, status: novoStatus, password: senhaFinal };
                     await setDoc(doc(db, "chatUsers", novoUsername), novoUserData);
                     await deleteDoc(doc(db, "chatUsers", usernameAntigo));
 
                     currentUserData = novoUserData;
                     localStorage.setItem('whatchat_username', novoUsername);
-
-                    alert("Usuário alterado com sucesso! Observação: conversas anteriores ficaram associadas ao usuário antigo e podem não aparecer mais.");
                 } else {
-                    const userRef = doc(db, "chatUsers", currentUserData.username);
-                    await updateDoc(userRef, {
-                        name: novoNome,
-                        avatar: novoAvatar,
-                        status: novoStatus,
-                        password: senhaFinal
-                    });
-
+                    await updateDoc(doc(db, "chatUsers", currentUserData.username), { name: novoNome, avatar: novoAvatar, status: novoStatus, password: senhaFinal });
                     currentUserData.name = novoNome;
                     currentUserData.avatar = novoAvatar;
                     currentUserData.status = novoStatus;
@@ -1062,9 +1010,7 @@
                 const snap = await getDoc(doc(db, "chatUsers", currentUserData.username));
                 contatosCache = (snap.exists() && Array.isArray(snap.data().contatos)) ? snap.data().contatos : [];
                 renderContactsList();
-            } catch (e) {
-                console.error(e);
-            }
+            } catch (e) { console.error(e); }
         }
 
         function renderContactsList(filtro = '') {
@@ -1103,9 +1049,7 @@
             });
         }
 
-        window.filterContacts = () => {
-            renderContactsList(document.getElementById('search-input').value);
-        };
+        window.filterContacts = () => { renderContactsList(document.getElementById('search-input').value); };
 
         window.selectContact = async (user) => {
             activeContactUsername = user.username;
@@ -1141,7 +1085,6 @@
 
             const chatId = [currentUserData.username, activeContactUsername].sort().join('_');
             const q = query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "asc"));
-
             const container = document.getElementById('messages-container');
             container.innerHTML = '';
 
@@ -1154,7 +1097,7 @@
                     const isSent = msg.sender === currentUserData.username;
 
                     const bubble = document.createElement('div');
-                    bubble.className = `max-w-[70%] p-3 rounded-2xl text-xs relative group ${
+                    bubble.className = `max-w-[75%] p-3 rounded-2xl text-xs relative group ${
                         isSent
                             ? 'bg-sky-600 text-white self-end rounded-tr-none shadow-blue-glow'
                             : 'bg-white text-slate-800 border border-slate-200 self-start rounded-tl-none shadow-sm'
@@ -1187,9 +1130,20 @@
                         `;
                     }
                     if (msg.audio) {
+                        const audioUniqueId = `audio_el_${msgId}`;
+                        // Gerador de barras estéticas de pulso sonoro fixas para simular onda
+                        const alturasBarras = [35, 60, 25, 80, 45, 90, 30, 70, 50, 100, 40, 65, 30, 85, 45, 60, 25, 75];
+                        let barrasHTML = alturasBarras.map(h => `<span class="w-1 bg-current rounded-full transition-all duration-200" style="height: ${h}%; opacity: 0.8;"></span>`).join('');
+
                         contentHTML += `
-                            <div class="my-1">
-                                <audio src="${msg.audio}" controls class="w-full max-w-[240px] h-10"></audio>
+                            <div class="my-1 flex items-center gap-3 min-w-[210px] py-1">
+                                <audio id="${audioUniqueId}" src="${msg.audio}" preload="metadata" class="hidden"></audio>
+                                <button type="button" onclick="togglePlayAudio(this, '${audioUniqueId}')" class="audio-play-btn w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition shadow-sm ${isSent ? 'bg-sky-700 hover:bg-sky-800 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}">
+                                    <i class="fas fa-play play-icon text-xs"></i>
+                                </button>
+                                <div class="flex items-center gap-1 flex-grow h-7 px-1">
+                                    ${barrasHTML}
+                                </div>
                             </div>
                         `;
                     }
